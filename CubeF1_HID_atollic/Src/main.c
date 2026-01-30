@@ -107,7 +107,7 @@ void SystemClock_Config(void)
   
   /* Enable HSE Oscillator and activate PLL with HSE as source */
   oscinitstruct.OscillatorType  = RCC_OSCILLATORTYPE_HSE;
-  oscinitstruct.HSEState        = RCC_HSE_ON;
+  oscinitstruct.HSEState        = RCC_HSE_ON;	// devrait etre RCC_HSE_BYPASS pour nucleo
   oscinitstruct.HSEPredivValue  = RCC_HSE_PREDIV_DIV1;
   oscinitstruct.PLL.PLLMUL      = RCC_PLL_MUL9;
     
