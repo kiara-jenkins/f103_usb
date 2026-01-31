@@ -1,0 +1,86 @@
+Device Descriptor:
+bcdUSB:             0x0110
+bDeviceClass:         0x00
+bDeviceSubClass:      0x00
+bDeviceProtocol:      0x00
+bMaxPacketSize0:      0x08 (8)
+idVendor:           0x1A2C
+idProduct:          0x4094
+bcdDevice:          0x0110
+iManufacturer:        0x01
+0x0409: "SEMICO"
+iProduct:             0x02
+0x0409: "USB Keyboard"
+iSerialNumber:        0x00
+bNumConfigurations:   0x01
+
+ConnectionStatus: DeviceConnected
+Current Config Value: 0x01
+Device Bus Speed:      Low
+Device Address:       0x02
+Open Pipes:              2
+
+Endpoint Descriptor:
+bEndpointAddress:     0x81
+Transfer Type:   Interrupt
+wMaxPacketSize:     0x0008 (8)
+bInterval:            0x0A
+
+Endpoint Descriptor:
+bEndpointAddress:     0x00
+Transfer Type:     Control
+wMaxPacketSize:     0x0507 (1287)
+wInterval:          0x0382
+bSyncAddress:         0x03
+
+Configuration Descriptor:
+wTotalLength:       0x003B
+bNumInterfaces:       0x02
+bConfigurationValue:  0x01
+iConfiguration:       0x00
+bmAttributes:         0xA0 (Bus Powered Remote Wakeup)
+MaxPower:             0xFA (500 Ma)
+
+Interface Descriptor:
+bInterfaceNumber:     0x00
+bAlternateSetting:    0x00
+bNumEndpoints:        0x01
+bInterfaceClass:      0x03 (HID)
+bInterfaceSubClass:   0x01
+bInterfaceProtocol:   0x01
+iInterface:           0x00
+
+HID Descriptor:
+bcdHID:             0x0110
+bCountryCode:         0x00
+bNumDescriptors:      0x01
+bDescriptorType:      0x22
+wDescriptorLength:  0x0036
+
+Endpoint Descriptor:
+bEndpointAddress:     0x81
+Transfer Type:   Interrupt
+wMaxPacketSize:     0x0008 (8)
+bInterval:            0x0A
+
+Interface Descriptor:
+bInterfaceNumber:     0x01
+bAlternateSetting:    0x00
+bNumEndpoints:        0x01
+bInterfaceClass:      0x03 (HID)
+bInterfaceSubClass:   0x00
+bInterfaceProtocol:   0x00
+iInterface:           0x00
+
+HID Descriptor:
+bcdHID:             0x0110
+bCountryCode:         0x00
+bNumDescriptors:      0x01
+bDescriptorType:      0x22
+wDescriptorLength:  0x0032
+
+Endpoint Descriptor:
+bEndpointAddress:     0x82
+Transfer Type:   Interrupt
+wMaxPacketSize:     0x0003 (3)
+bInterval:            0x0A

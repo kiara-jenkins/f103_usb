@@ -1,0 +1,119 @@
+Device Descriptor:
+bcdUSB:             0x0110
+bDeviceClass:         0x00
+bDeviceSubClass:      0x00
+bDeviceProtocol:      0x00
+bMaxPacketSize0:      0x08 (8)
+idVendor:           0x0582 (Roland Corporation)
+idProduct:          0x011D
+bcdDevice:          0x0100
+iManufacturer:        0x01
+0x0409: "Roland"
+iProduct:             0x02
+0x0409: "Roland AX-09"
+iSerialNumber:        0x00
+bNumConfigurations:   0x01
+
+ConnectionStatus: DeviceConnected
+Current Config Value: 0x01
+Device Bus Speed:     Full
+Device Address:       0x02
+Open Pipes:              2
+
+Endpoint Descriptor:
+bEndpointAddress:     0x01
+Transfer Type:        Bulk
+wMaxPacketSize:     0x0040 (64)
+wInterval:          0x0000
+bSyncAddress:         0x00
+
+Endpoint Descriptor:
+bEndpointAddress:     0x00
+Transfer Type:     Control
+wMaxPacketSize:     0x0509 (1289)
+wInterval:          0x0282
+bSyncAddress:         0x40
+
+Configuration Descriptor:
+wTotalLength:       0x0065
+bNumInterfaces:       0x02
+bConfigurationValue:  0x01
+iConfiguration:       0x00
+bmAttributes:         0xC0 (Bus Powered Self Powered )
+MaxPower:             0x01 (2 Ma)
+
+Interface Descriptor:
+bInterfaceNumber:     0x00
+bAlternateSetting:    0x00
+bNumEndpoints:        0x00
+bInterfaceClass:      0x01 (Audio)
+bInterfaceSubClass:   0x01 (Audio Control)
+bInterfaceProtocol:   0x00
+iInterface:           0x00
+
+Audio Control Interface Header Descriptor:
+bLength:              0x09
+bDescriptorType:      0x24
+bDescriptorSubtype:   0x01
+bcdADC:             0x0100
+wTotalLength:       0x0009
+bInCollection:        0x01
+baInterfaceNr[1]:     0x01
+
+Interface Descriptor:
+bInterfaceNumber:     0x01
+bAlternateSetting:    0x00
+bNumEndpoints:        0x02
+bInterfaceClass:      0x01 (Audio)
+bInterfaceSubClass:   0x03 (MIDI Streaming)
+bInterfaceProtocol:   0x00
+iInterface:           0x00
+
+Unknown Descriptor:
+bDescriptorType:      0x24
+bLength:              0x07
+07 24 01 00 01 41 00 
+
+Unknown Descriptor:
+bDescriptorType:      0x24
+bLength:              0x06
+06 24 02 01 40 00 
+
+Unknown Descriptor:
+bDescriptorType:      0x24
+bLength:              0x06
+06 24 02 02 80 00 
+
+Unknown Descriptor:
+bDescriptorType:      0x24
+bLength:              0x09
+09 24 03 01 20 01 80 01 00 
+
+Unknown Descriptor:
+bDescriptorType:      0x24
+bLength:              0x09
+09 24 03 02 10 01 40 01 00 
+
+Endpoint Descriptor:
+bEndpointAddress:     0x01
+Transfer Type:        Bulk
+wMaxPacketSize:     0x0040 (64)
+wInterval:          0x0000
+bSyncAddress:         0x00
+
+Unknown Descriptor:
+bDescriptorType:      0x25
+bLength:              0x05
+05 25 01 01 40 
+
+Endpoint Descriptor:
+bEndpointAddress:     0x82
+Transfer Type:        Bulk
+wMaxPacketSize:     0x0040 (64)
+wInterval:          0x0000
+bSyncAddress:         0x00
+
+Unknown Descriptor:
+bDescriptorType:      0x25
+bLength:              0x05
+05 25 01 01 20 
