@@ -20,28 +20,13 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+
+#include "options.h"
+#include "gpio.h"
+#include "stm32f1xx_ll_gpio.h"
+
 #include "usb_device.h"
-
-/* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */
 #include "usbd_hid.h"
-/* USER CODE END Includes */
-
-/* Private typedef -----------------------------------------------------------*/
-/* USER CODE BEGIN PTD */
-
-/* USER CODE END PTD */
-
-/* Private define ------------------------------------------------------------*/
-/* USER CODE BEGIN PD */
-/* USER CODE END PD */
-
-/* Private macro -------------------------------------------------------------*/
-/* USER CODE BEGIN PM */
-
-/* USER CODE END PM */
-
-/* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
 extern USBD_HandleTypeDef hUsbDeviceFS;
@@ -55,15 +40,6 @@ uint8_t midiNoteOff[4];
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
-static void MX_GPIO_Init(void);
-/* USER CODE BEGIN PFP */
-
-/* USER CODE END PFP */
-
-/* Private user code ---------------------------------------------------------*/
-/* USER CODE BEGIN 0 */
-
-/* USER CODE END 0 */
 
 /**
   * @brief  The application entry point.
@@ -71,16 +47,8 @@ static void MX_GPIO_Init(void);
   */
 int main(void)
 {
-  /* USER CODE BEGIN 1 */
-
-  /* USER CODE END 1 */
-
-  /* MCU Configuration--------------------------------------------------------*/
-
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
-
-  /* USER CODE BEGIN Init */
 
   // MIDI Message Definitions
   midiNoteOn[0] = 0x09;	// 0--> Cable Number 0, values can be 0 to F, 9 --> MIDI Note On Message
@@ -93,40 +61,28 @@ int main(void)
   midiNoteOff[2] = 0x40;	// MIDI Note Value: here for demo purpose lets take 0x40 or 64
   midiNoteOff[3] = 0x7F; // MIDI Note Velocity: Range 0 to 127, here Max value is used for demo
 
-  /* USER CODE END Init */
 
   /* Configure the system clock */
   SystemClock_Config();
 
-  /* USER CODE BEGIN SysInit */
 
-  /* USER CODE END SysInit */
+  /* Initialize peripherals */
+  gpio_init();
 
-  /* Initialize all configured peripherals */
-  MX_GPIO_Init();
   MX_USB_DEVICE_Init();
-  /* USER CODE BEGIN 2 */
-
-  /* USER CODE END 2 */
 
   /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
   while (1)
   {
-    /* USER CODE END WHILE */
-
-    /* USER CODE BEGIN 3 */
 	  // Make sure the USB functions are not BUSY before sending the MIDI Message
 	  while( ((USBD_HID_HandleTypeDef *) hUsbDeviceFS.pClassData)->state == HID_BUSY ) {}
-	  USBD_HID_SendReport(&hUsbDeviceFS, midiNoteOn, 4);
+	  USBD_HID_SendReport(&hUsbDeviceFS, midiNoteOn, 4); LED_ON();
 	  HAL_Delay(500);
 
 	  while( ((USBD_HID_HandleTypeDef *) hUsbDeviceFS.pClassData)->state == HID_BUSY ) {}
-	  USBD_HID_SendReport(&hUsbDeviceFS, midiNoteOff, 4);
+	  USBD_HID_SendReport(&hUsbDeviceFS, midiNoteOff, 4); LED_OFF();
 	  HAL_Delay(500);
-
   }
-  /* USER CODE END 3 */
 }
 
 /**
@@ -171,20 +127,6 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-}
-
-/**
-  * @brief GPIO Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_GPIO_Init(void)
-{
-
-  /* GPIO Ports Clock Enable */
-  __HAL_RCC_GPIOD_CLK_ENABLE();
-  __HAL_RCC_GPIOA_CLK_ENABLE();
-
 }
 
 /* USER CODE BEGIN 4 */

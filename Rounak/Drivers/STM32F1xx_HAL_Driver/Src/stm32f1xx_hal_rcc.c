@@ -999,33 +999,29 @@ if (((RCC_ClkInitStruct->ClockType) & RCC_CLOCKTYPE_PCLK1) == RCC_CLOCKTYPE_PCLK
   *            @arg @ref RCC_MCODIV_1 no division applied to MCO clock
   * @retval None
   */
+/*
 void HAL_RCC_MCOConfig(uint32_t RCC_MCOx, uint32_t RCC_MCOSource, uint32_t RCC_MCODiv)
 {
   GPIO_InitTypeDef gpio = {0U};
 
-  /* Check the parameters */
   assert_param(IS_RCC_MCO(RCC_MCOx));
   assert_param(IS_RCC_MCODIV(RCC_MCODiv));
   assert_param(IS_RCC_MCO1SOURCE(RCC_MCOSource));
 
-  /* Prevent unused argument(s) compilation warning */
   UNUSED(RCC_MCOx);
   UNUSED(RCC_MCODiv);
 
-  /* Configure the MCO1 pin in alternate function mode */
   gpio.Mode      = GPIO_MODE_AF_PP;
   gpio.Speed     = GPIO_SPEED_FREQ_HIGH;
   gpio.Pull      = GPIO_NOPULL;
   gpio.Pin       = MCO1_PIN;
 
-  /* MCO1 Clock Enable */
   MCO1_CLK_ENABLE();
 
   HAL_GPIO_Init(MCO1_GPIO_PORT, &gpio);
 
-  /* Configure the MCO clock source */
   __HAL_RCC_MCO1_CONFIG(RCC_MCOSource, RCC_MCODiv);
-}
+}*/
 
 /**
   * @brief  Enables the Clock Security System.
