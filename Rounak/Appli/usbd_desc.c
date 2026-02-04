@@ -65,11 +65,11 @@
 
 #define USBD_VID     1155
 #define USBD_LANGID_STRING     1033
-#define USBD_MANUFACTURER_STRING     "STMicroelectronics"
+#define USBD_MANUFACTURER_STRING     "Brisky"
 #define USBD_PID_FS     22315
-#define USBD_PRODUCT_STRING_FS     "STM32 Human interface"
-#define USBD_CONFIGURATION_STRING_FS     "HID Config"
-#define USBD_INTERFACE_STRING_FS     "HID Interface"
+#define USBD_PRODUCT_STRING_FS     "Zic Sensor"
+#define USBD_CONFIGURATION_STRING_FS     "Config"
+#define USBD_INTERFACE_STRING_FS     "MIDI Interface"
 
 /* USER CODE BEGIN PRIVATE_DEFINES */
 

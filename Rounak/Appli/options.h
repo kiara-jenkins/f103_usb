@@ -19,7 +19,7 @@
 	ATTENTION au linker script, celui de la Blue Pill est Debug_STM32F103C8_FLASH.ld, il est Ok pour Nucleo mais limite la flash a 64k
  */
 
-// #define NUCLEO
+#define NUCLEO
 
 #ifdef NUCLEO
   #define USE_CDC

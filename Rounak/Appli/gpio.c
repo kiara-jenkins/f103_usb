@@ -26,6 +26,8 @@ LL_GPIO_SetPinOutputType( GPIOA, LL_GPIO_PIN_5, LL_GPIO_OUTPUT_PUSHPULL );
 // blue button act. lo
 LL_APB2_GRP1_EnableClock( LL_APB2_GRP1_PERIPH_GPIOC );
 LL_GPIO_SetPinMode(       GPIOC, LL_GPIO_PIN_13, LL_GPIO_MODE_FLOATING );
+// USB_DP pull-up (1.5k / PA6)
+LL_GPIO_SetPinMode(       GPIOA, LL_GPIO_PIN_6, LL_GPIO_MODE_FLOATING );
 #else
 // blue pill LED = PC13 act. lo
 LL_APB2_GRP1_EnableClock( LL_APB2_GRP1_PERIPH_GPIOC );
@@ -39,4 +41,15 @@ LL_GPIO_SetPinOutputType( GPIOC, LL_GPIO_PIN_13, LL_GPIO_OUTPUT_PUSHPULL );
 LL_APB2_GRP1_EnableClock( LL_APB2_GRP1_PERIPH_GPIOA );
 } // gpio_init(void)
 
-
+#ifdef NUCLEO
+void USB_DP_pullup( int on )	 // (1.5k / PA6)
+{
+if	( on )
+	{
+	LL_GPIO_SetOutputPin(     GPIOA, LL_GPIO_PIN_6 );
+	LL_GPIO_SetPinMode(       GPIOA, LL_GPIO_PIN_6, LL_GPIO_MODE_OUTPUT );
+	LL_GPIO_SetPinOutputType( GPIOA, LL_GPIO_PIN_6, LL_GPIO_OUTPUT_PUSHPULL );
+	}
+else	LL_GPIO_SetPinMode(       GPIOA, LL_GPIO_PIN_6, LL_GPIO_MODE_FLOATING );
+}
+#endif

@@ -71,6 +71,9 @@ int main(void)
 
   MX_USB_DEVICE_Init();
 
+  USB_DP_pullup( 1 );
+  HAL_Delay(5000);
+
   /* Infinite loop */
   while (1)
   {
@@ -98,7 +101,11 @@ void SystemClock_Config(void)
   /** Initializes the CPU, AHB and APB busses clocks 
   */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+  #ifdef HSE_EXT
+  RCC_OscInitStruct.HSEState = RCC_HSE_BYPASS;
+  #else
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
+  #endif
   RCC_OscInitStruct.HSEPredivValue = RCC_HSE_PREDIV_DIV1;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
