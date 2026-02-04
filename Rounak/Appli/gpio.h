@@ -15,6 +15,7 @@ extern "C" {
 #endif
 
 void gpio_init(void);
+void gpio_uart2_init(void);
 void USB_DP_pullup( int on );	 // (1.5k / PA6)
 
 #ifdef __cplusplus
