@@ -139,7 +139,7 @@ HAL_StatusTypeDef HAL_PCD_Init(PCD_HandleTypeDef *hpcd)
   }
 
   /* Check the parameters */
-  assert_param(IS_PCD_ALL_INSTANCE(hpcd->Instance));
+  // assert_param(IS_PCD_ALL_INSTANCE(hpcd->Instance));
 
 #if defined (USB_OTG_FS)
   USBx = hpcd->Instance;

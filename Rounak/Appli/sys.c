@@ -76,7 +76,7 @@ for	( i = 0; i <=  97; ++i )
 }
 
 // System Clock Configuration selon options
-void SystemClock_Config_NOT_NOW(void)
+void SystemClock_Config_LL(void)
 {
 
 #ifdef HSE_EXT
@@ -132,8 +132,12 @@ while(LL_RCC_HSI_IsReady() != 1)
   LL_RCC_SetAPB1Prescaler(LL_RCC_APB1_DIV_1);
 #endif
   /* Set APB12 prescaler : max 72 MHz */
-LL_RCC_SetAPB2Prescaler(LL_RCC_APB2_DIV_1);
+  LL_RCC_SetAPB2Prescaler(LL_RCC_APB2_DIV_1);
 
   /* Update SystemCoreClock variable */
   SystemCoreClockUpdate();
+
+  // USB clock
+  LL_RCC_SetUSBClockSource(LL_RCC_USB_CLKSOURCE_PLL_DIV_1_5);
+  LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_USB);
 }

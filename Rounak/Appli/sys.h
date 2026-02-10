@@ -17,7 +17,7 @@ void tickdelay( unsigned int tickd );
 void report_interrupts();
 
 // System Clock Configuration selon options
-void SystemClock_Config(void);
+void SystemClock_Config_LL(void);
 
 // disable systick interrupt
 void systick_no_interrupt();
