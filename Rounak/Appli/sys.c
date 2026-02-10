@@ -6,7 +6,16 @@
 #include "CDC.h"	// pour snprintf
 
 // systick avec interrupt
-// ATTENTION SysTick_Handler() doit etre defini quelque part
+volatile unsigned int cnt100Hz = 0;
+volatile unsigned int cnt1Hz = 0;
+
+void SysTick_Handler(void)
+{
+++cnt100Hz;
+if	( ( cnt100Hz % 100 ) == 0 )
+	++cnt1Hz;
+}
+
 void systick_init( unsigned int freq )
 {
 // periode
@@ -28,10 +37,18 @@ void systick_no_interrupt()
 SysTick->CTRL &= (~SysTick_CTRL_TICKINT_Msk);
 }
 
+void sys_delay( uint32_t delay )
+{
+uint32_t tickstart = cnt100Hz;
+delay += 1;
+while	( ( cnt100Hz - tickstart ) < delay )
+	{ }
+}
+
 // temporisation base sur systick, max moitie de la periode systick interrupt
 // unites en periodes d'horloge du timer ( HCLK ou HCLK/8 )
 // tickd doit etre inferieur a (LOAD+1)/2 = SystemCoreClock / ( 2 * freq )
-// soit 360000 @ 72MzZ, 40000 @ 8MHz ( systick interrupt 10 ms )
+// soit 360000 @ 72MHz, 40000 @ 8MHz ( systick interrupt 10 ms )
 void tickdelay( unsigned int tickd )
 {
 int tper = SysTick->LOAD + 1;
@@ -76,7 +93,7 @@ for	( i = 0; i <=  97; ++i )
 }
 
 // System Clock Configuration selon options
-void SystemClock_Config_LL(void)
+void SystemClock_Config_USB(void)
 {
 
 #ifdef HSE_EXT

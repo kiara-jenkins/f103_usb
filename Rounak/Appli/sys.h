@@ -1,10 +1,15 @@
+extern volatile unsigned int cnt100Hz;
+extern volatile unsigned int cnt1Hz;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 // systick avec interrupt
-// ATTENTION SysTick_Handler() doit etre defini quelque part
 void systick_init( unsigned int freq );
+
+// temporisation basee sur cnt100Hz
+void sys_delay( uint32_t delay );
 
 // temporisation base sur systick
 // unites en periodes d'horloge du timer ( HCLK ou HCLK/8 )
@@ -16,11 +21,11 @@ void tickdelay( unsigned int tickd );
 // F103 : UARTS 1,2,3 : 37, 38, 39; TIM 2, 3, 4 : 28, 29, 30
 void report_interrupts();
 
-// System Clock Configuration selon options
-void SystemClock_Config_LL(void);
-
 // disable systick interrupt
 void systick_no_interrupt();
+
+// System Clock Configuration selon options
+void SystemClock_Config_USB(void);
 
 #ifdef __cplusplus
 }
