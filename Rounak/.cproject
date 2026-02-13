@@ -36,13 +36,12 @@
 								<option id="com.atollic.truestudio.exe.debug.toolchain.gcc.optimization.level.352924647" name="Optimization Level" superClass="com.atollic.truestudio.exe.debug.toolchain.gcc.optimization.level" useByScannerDiscovery="false" value="com.atollic.truestudio.gcc.optimization.level.0fast" valueType="enumerated"/>
 								<option id="com.atollic.truestudio.exe.debug.toolchain.gcc.debug.info.1229916453" name="Debug Level" superClass="com.atollic.truestudio.exe.debug.toolchain.gcc.debug.info" useByScannerDiscovery="false" value="com.atollic.truestudio.gcc.debug.info.3" valueType="enumerated"/>
 								<option id="com.atollic.truestudio.gcc.directories.select.97886428" name="Include path" superClass="com.atollic.truestudio.gcc.directories.select" useByScannerDiscovery="false" valueType="includePath">
-									<listOptionValue builtIn="false" value="../Drivers/CMSIS/Device/ST/STM32F1xx/Include"/>
-									<listOptionValue builtIn="false" value="../Drivers/CMSIS/Include"/>
-									<listOptionValue builtIn="false" value="../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy"/>
 									<listOptionValue builtIn="false" value="../Drivers/STM32F1xx_HAL_Driver/Inc"/>
 									<listOptionValue builtIn="false" value="../USB_lib"/>
 									<listOptionValue builtIn="false" value="../Appli"/>
-									<listOptionValue builtIn="false" value="&quot;C:\STM32\CubeF1\Drivers\STM32F1xx_HAL_Driver\Inc&quot;"/>
+									<listOptionValue builtIn="false" value="C:/STM32/CubeF1/Drivers/CMSIS/Device/ST/STM32F1xx/Include"/>
+									<listOptionValue builtIn="false" value="C:/STM32/CubeF1/Drivers/CMSIS/Include"/>
+									<listOptionValue builtIn="false" value="C:/STM32/CubeF1/Drivers/STM32F1xx_HAL_Driver/Inc"/>
 								</option>
 								<option id="com.atollic.truestudio.gcc.symbols.defined.1512564908" name="Defined symbols" superClass="com.atollic.truestudio.gcc.symbols.defined" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="STM32F103xB"/>
