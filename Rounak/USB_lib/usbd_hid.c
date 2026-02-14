@@ -1,93 +1,8 @@
-/**
-  ******************************************************************************
-  * @file    usbd_hid.c
-  * @author  MCD Application Team
-  * @brief   This file provides the HID core functions.
-  *
-  * @verbatim
-  *
-  *          ===================================================================
-  *                                HID Class  Description
-  *          ===================================================================
-  *           This module manages the HID class V1.11 following the "Device Class Definition
-  *           for Human Interface Devices (HID) Version 1.11 Jun 27, 2001".
-  *           This driver implements the following aspects of the specification:
-  *             - The Boot Interface Subclass
-  *             - The Mouse protocol
-  *             - Usage Page : Generic Desktop
-  *             - Usage : Joystick
-  *             - Collection : Application
-  *
-  * @note     In HS mode and when the DMA is used, all variables and data structures
-  *           dealing with the DMA during the transaction process should be 32-bit aligned.
-  *
-  *
-  *  @endverbatim
-  *
-  ******************************************************************************
-  * @attention
-  *
-  * <h2><center>&copy; Copyright (c) 2015 STMicroelectronics.
-  * All rights reserved.</center></h2>
-  *
-  * This software component is licensed by ST under Ultimate Liberty license
-  * SLA0044, the "License"; You may not use this file except in compliance with
-  * the License. You may obtain a copy of the License at:
-  *                      www.st.com/SLA0044
-  *
-  ******************************************************************************
-  */
-
-/* BSPDependencies
-- "stm32xxxxx_{eval}{discovery}{nucleo_144}.c"
-- "stm32xxxxx_{eval}{discovery}_io.c"
-EndBSPDependencies */
 
 /* Includes ------------------------------------------------------------------*/
 #include "usbd_hid.h"
 #include "usbd_ctlreq.h"
 
-
-/** @addtogroup STM32_USB_DEVICE_LIBRARY
-  * @{
-  */
-
-
-/** @defgroup USBD_HID
-  * @brief usbd core module
-  * @{
-  */
-
-/** @defgroup USBD_HID_Private_TypesDefinitions
-  * @{
-  */
-/**
-  * @}
-  */
-
-
-/** @defgroup USBD_HID_Private_Defines
-  * @{
-  */
-
-/**
-  * @}
-  */
-
-
-/** @defgroup USBD_HID_Private_Macros
-  * @{
-  */
-/**
-  * @}
-  */
-
-
-
-
-/** @defgroup USBD_HID_Private_FunctionPrototypes
-  * @{
-  */
 
 
 static uint8_t  USBD_HID_Init(USBD_HandleTypeDef *pdev,
@@ -100,10 +15,6 @@ static uint8_t  USBD_HID_Setup(USBD_HandleTypeDef *pdev,
                                USBD_SetupReqTypedef *req);
 
 static uint8_t  *USBD_HID_GetFSCfgDesc(uint16_t *length);
-
-static uint8_t  *USBD_HID_GetHSCfgDesc(uint16_t *length);
-
-static uint8_t  *USBD_HID_GetOtherSpeedCfgDesc(uint16_t *length);
 
 static uint8_t  *USBD_HID_GetDeviceQualifierDesc(uint16_t *length);
 
@@ -128,9 +39,9 @@ USBD_ClassTypeDef  USBD_HID =
   NULL, /*SOF */
   NULL,
   NULL,
-  USBD_HID_GetHSCfgDesc,
+  NULL,		// USBD_HID_GetHSCfgDesc,
   USBD_HID_GetFSCfgDesc,
-  USBD_HID_GetOtherSpeedCfgDesc,
+  NULL,		// USBD_HID_GetOtherSpeedCfgDesc,
   USBD_HID_GetDeviceQualifierDesc,
 };
 
@@ -289,19 +200,6 @@ __ALIGN_BEGIN static uint8_t USBD_HID_CfgFSDesc[]  __ALIGN_END =
 		  0x01,		// No. of Embedded MIDI OUT Jack: 1 (1Byte)
 		  0x03		// ID of Embedded MIDI OUT Jack: 3 (1Byte)
 };
-
-/* USB HID device HS Configuration Descriptor */
-__ALIGN_BEGIN static uint8_t USBD_HID_CfgHSDesc[]  __ALIGN_END =
-{
-
-};
-
-/* USB HID device Other Speed Configuration Descriptor */
-__ALIGN_BEGIN static uint8_t USBD_HID_OtherSpeedCfgDesc[]  __ALIGN_END =
-{
-
-};
-
 
 /* USB HID device Configuration Descriptor */
 __ALIGN_BEGIN static uint8_t USBD_HID_Desc[USB_HID_DESC_SIZ]  __ALIGN_END  =
@@ -627,32 +525,6 @@ static uint8_t  *USBD_HID_GetFSCfgDesc(uint16_t *length)
 }
 
 /**
-  * @brief  USBD_HID_GetCfgHSDesc
-  *         return HS configuration descriptor
-  * @param  speed : current device speed
-  * @param  length : pointer data length
-  * @retval pointer to descriptor buffer
-  */
-static uint8_t  *USBD_HID_GetHSCfgDesc(uint16_t *length)
-{
-  *length = sizeof(USBD_HID_CfgHSDesc);
-  return USBD_HID_CfgHSDesc;
-}
-
-/**
-  * @brief  USBD_HID_GetOtherSpeedCfgDesc
-  *         return other speed configuration descriptor
-  * @param  speed : current device speed
-  * @param  length : pointer data length
-  * @retval pointer to descriptor buffer
-  */
-static uint8_t  *USBD_HID_GetOtherSpeedCfgDesc(uint16_t *length)
-{
-  *length = sizeof(USBD_HID_OtherSpeedCfgDesc);
-  return USBD_HID_OtherSpeedCfgDesc;
-}
-
-/**
   * @brief  USBD_HID_DataIn
   *         handle data IN Stage
   * @param  pdev: device instance
@@ -682,18 +554,3 @@ static uint8_t  *USBD_HID_GetDeviceQualifierDesc(uint16_t *length)
   return USBD_HID_DeviceQualifierDesc;
 }
 
-/**
-  * @}
-  */
-
-
-/**
-  * @}
-  */
-
-
-/**
-  * @}
-  */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
