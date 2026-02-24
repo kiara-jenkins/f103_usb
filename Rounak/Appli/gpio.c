@@ -54,6 +54,23 @@ LL_GPIO_SetPinOutputType( GPIOA, LL_GPIO_PIN_2, LL_GPIO_OUTPUT_PUSHPULL );
 LL_GPIO_SetPinMode(       GPIOA, LL_GPIO_PIN_3, LL_GPIO_MODE_FLOATING );
 }
 
+#ifdef ENCODER_TIM
+// TIM3 encoder interface PC6, PC7 en ALTERNATE REMAP
+// N.B. ALTERNATE est pin par pin, non necessaire pour input
+//      REMAP est "full" sur 4 pins et necessaire meme pour inputs
+void gpio_encoder_t3_init(void)
+{
+LL_APB2_GRP1_EnableClock( LL_APB2_GRP1_PERIPH_GPIOC );
+// UWAGA : il faut activer l'horloge AFIO pour faire du remap
+LL_APB2_GRP1_EnableClock( LL_APB2_GRP1_PERIPH_AFIO );
+// Full remap     (CH1/PC6, CH2/PC7, CH3/PC8, CH4/PC9)
+LL_GPIO_AF_EnableRemap_TIM3();
+// mode ALTERNATE necessaire seulement pour outputs, semble-t-il
+LL_GPIO_SetPinMode( GPIOC, LL_GPIO_PIN_6, LL_GPIO_MODE_FLOATING );
+LL_GPIO_SetPinMode( GPIOC, LL_GPIO_PIN_7, LL_GPIO_MODE_FLOATING );
+}
+#endif
+
 #ifdef NUCLEO
 void USB_DP_pullup( int on )	 // (1.5k / PA6)
 {

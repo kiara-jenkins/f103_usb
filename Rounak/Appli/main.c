@@ -14,6 +14,7 @@
 #include "sys.h"
 #include "gpio.h"
 #include "uarts.h"
+#include "encoder.h"
 #include "CDC.h"
 
 // static data
@@ -23,7 +24,8 @@ extern PCD_HandleTypeDef hpcd_USB_FS;
 // MIDI Message arrays: 4 Bytes
 // 1st byte : MSBs --> Cable Number 0, LSBs --> duplicate MSBs of MIDI opcode (!??!)
 uint8_t midiNoteOn[4] = { 0x09, 0x93, 65, 99 };
-uint8_t midiNoteOff[4]= { 0x08, 0x83, 65, 99 };
+// B0 7B 00 (123) = all notes off
+uint8_t midiNoteOff[4]= { 0x0b, 0xb0, 0x7b, 0 };
 
 
 // USB interrupt routine
@@ -42,6 +44,10 @@ switch	( c )
 		break;
 	case '$' :
 		report_interrupts();
+		break;
+	case 'e' :
+		CDC_printf( "b=%d, xy=%d:%d, e=%u\n", LL_GPIO_IsInputPinSet(GPIOC, LL_GPIO_PIN_13 ),
+			LL_GPIO_IsInputPinSet(GPIOC, LL_GPIO_PIN_6 ), LL_GPIO_IsInputPinSet(GPIOC, LL_GPIO_PIN_7 ), encoder_get(TIM3) );
 		break;
 	default:	// simple echo
 		CDC_printf( "cmd '%c'\n", ((c>=' ')?(c):('?')) );
@@ -75,6 +81,11 @@ CDC.verbose = 1;
 CDC_printf("Hello je suis imposant\n");
 #endif
 
+#ifdef ENCODER_TIM
+gpio_encoder_t3_init();
+encoder_init( TIM3 );
+#endif
+
   /* Init Device Library, add supported class and start the library. */
   if (USBD_Init(&hUsbDeviceFS, &FS_Desc, DEVICE_FS) != USBD_OK)
   {
@@ -97,18 +108,27 @@ sys_delay(500);
 int c;
 while (1)
   	{
-	// Make sure the USB functions are not BUSY before sending the MIDI Message
+	short int e = encoder_get(TIM3);
+	CDC_printf( "b=%d, xy=%d:%d, e=%d\n", LL_GPIO_IsInputPinSet(GPIOC, LL_GPIO_PIN_13 ),
+		LL_GPIO_IsInputPinSet(GPIOC, LL_GPIO_PIN_6 ), LL_GPIO_IsInputPinSet(GPIOC, LL_GPIO_PIN_7 ), (int)e );
+	if	( e < 0 ) e = 0;
+	if	( e > 24 ) e = 24;
+	e /= 2;	// cheap encoder in mode X2
+	midiNoteOn[2] = 65 + e;		// gamme chromatique sur 1 octave a partir de Fa
+
+// Make sure the USB functions are not BUSY before sending the MIDI Message
 	while( ((USBD_HID_HandleTypeDef *) hUsbDeviceFS.pClassData)->state == HID_BUSY ) {}
 	USBD_HID_SendReport(&hUsbDeviceFS, midiNoteOn, 4); LED_ON();
-	sys_delay(50);
+	sys_delay(30);
 	if	( ( c = CDC_getcmd() ) > 0 )
 		cmd_handler( c );
 
 	while( ((USBD_HID_HandleTypeDef *) hUsbDeviceFS.pClassData)->state == HID_BUSY ) {}
 	USBD_HID_SendReport(&hUsbDeviceFS, midiNoteOff, 4); LED_OFF();
-	sys_delay(50);
+	sys_delay(10);
 	if	( ( c = CDC_getcmd() ) > 0 )
 		cmd_handler( c );
+
 
 	}
 }

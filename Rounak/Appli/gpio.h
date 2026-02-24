@@ -16,6 +16,7 @@ extern "C" {
 
 void gpio_init(void);
 void gpio_uart2_init(void);
+void gpio_encoder_t3_init(void);	// TIM3 encoder interface PC6, PC7
 void USB_DP_pullup( int on );	 // (1.5k / PA6)
 
 #ifdef __cplusplus

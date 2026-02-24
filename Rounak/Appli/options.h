@@ -34,3 +34,5 @@
 #endif
 
 #define USE_PLL	// 64 MHz (HSI) ou 72 MHZ (HSE, HSE_EXT)
+
+#define ENCODER_TIM	// interface quadratic encoder utilisant un timer
