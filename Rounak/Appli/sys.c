@@ -5,16 +5,16 @@
 #include "sys.h"
 #include "CDC.h"	// pour snprintf
 
-// systick avec interrupt
-volatile unsigned int cnt100Hz = 0;
-volatile unsigned int cnt1Hz = 0;
+// systick counter
+extern volatile unsigned int cnt100Hz;
 
+/* interrupt handler deporte dans main()
 void SysTick_Handler(void)
 {
 ++cnt100Hz;
 if	( ( cnt100Hz % 100 ) == 0 )
 	++cnt1Hz;
-}
+} */
 
 void systick_init( unsigned int freq )
 {
