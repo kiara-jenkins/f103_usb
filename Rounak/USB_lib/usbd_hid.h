@@ -42,7 +42,7 @@ extern "C" {
   * @{
   */
 #define HID_EPIN_ADDR                 0x81U
-#define HID_EPIN_SIZE                 0x04U
+#define HID_EPIN_SIZE                 0x40U	// attention a maintenir coherence avec descripteur de l'EP IN 01 ou aka 0x81
 
 #define USB_HID_CONFIG_DESC_SIZ       34U
 #define USB_HID_DESC_SIZ              9U
