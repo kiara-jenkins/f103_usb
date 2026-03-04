@@ -20,7 +20,7 @@ LL_APB1_GRP1_EnableClock( LL_APB1_GRP1_PERIPH_PWR );
 LL_GPIO_AF_Remap_SWJ_NOJTAG();	// NOJTAG: JTAG-DP Disabled and SW-DP Enabled
 
 #ifdef NUCLEO
-// Nucleo LED = PA5 act. hi	!!! ecrase par SPI SCK
+// Nucleo LED = PA5 act. hi	!!! possiblement ecrase par SPI SCK
 LL_APB2_GRP1_EnableClock( LL_APB2_GRP1_PERIPH_GPIOA );
 LL_GPIO_SetPinMode(       GPIOA, LL_GPIO_PIN_5, LL_GPIO_MODE_OUTPUT );
 LL_GPIO_SetPinOutputType( GPIOA, LL_GPIO_PIN_5, LL_GPIO_OUTPUT_PUSHPULL );
@@ -81,5 +81,24 @@ if	( on )
 	LL_GPIO_SetPinOutputType( GPIOA, LL_GPIO_PIN_6, LL_GPIO_OUTPUT_PUSHPULL );
 	}
 else	LL_GPIO_SetPinMode(       GPIOA, LL_GPIO_PIN_6, LL_GPIO_MODE_FLOATING );
+}
+#endif
+
+#ifdef USE_I2C
+void gpio_i2c1_init(void)
+{
+LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_GPIOB);
+// Full remap     (SCL/PB8, SDA/PB9)
+LL_GPIO_AF_EnableRemap_I2C1();
+// pin PB8 = SCL
+LL_GPIO_SetPinMode(	  GPIOB, LL_GPIO_PIN_8, LL_GPIO_MODE_ALTERNATE);
+LL_GPIO_SetPinSpeed(	  GPIOB, LL_GPIO_PIN_8, LL_GPIO_SPEED_FREQ_HIGH);
+LL_GPIO_SetPinPull(	  GPIOB, LL_GPIO_PIN_8, LL_GPIO_PULL_UP);
+LL_GPIO_SetPinOutputType( GPIOB, LL_GPIO_PIN_8, LL_GPIO_OUTPUT_OPENDRAIN);
+// pin PB9 = SDA
+LL_GPIO_SetPinMode(	  GPIOB, LL_GPIO_PIN_9, LL_GPIO_MODE_ALTERNATE);
+LL_GPIO_SetPinSpeed(	  GPIOB, LL_GPIO_PIN_9, LL_GPIO_SPEED_FREQ_HIGH);
+LL_GPIO_SetPinPull(	  GPIOB, LL_GPIO_PIN_9, LL_GPIO_PULL_UP);
+LL_GPIO_SetPinOutputType( GPIOB, LL_GPIO_PIN_9, LL_GPIO_OUTPUT_OPENDRAIN);
 }
 #endif

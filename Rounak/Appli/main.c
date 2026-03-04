@@ -15,6 +15,7 @@
 #include "gpio.h"
 #include "uarts.h"
 #include "encoder.h"
+#include "i2c.h"
 #include "CDC.h"
 
 // // static data
@@ -98,10 +99,15 @@ switch	( c )
 	case '$' :
 		report_interrupts();
 		break;
+
+	#ifdef ENCODER_TIM
 	case 'e' :
 		CDC_printf( "b=%d, xy=%d:%d, e=%u\n", LL_GPIO_IsInputPinSet(GPIOC, LL_GPIO_PIN_13 ),
 			LL_GPIO_IsInputPinSet(GPIOC, LL_GPIO_PIN_6 ), LL_GPIO_IsInputPinSet(GPIOC, LL_GPIO_PIN_7 ), encoder_get(TIM3) );
 		break;
+	#endif
+
+	#ifdef MIDI_USB
 	case 's' :
 		/* vu dans usbd_def.h
 		#define USBD_STATE_DEFAULT                              0x01U
@@ -118,13 +124,28 @@ switch	( c )
 			((USBD_HID_HandleTypeDef *) hUsbDeviceFS.pClassData)->state
 			);
 		break;
+	#endif
+
 	case '0' :
 	case '1' :
 	case '2' :
 	case '3' :
 	case '4' :
 	case '5' : cntblinks = c - '0';
+	#ifdef USE_I2C
+		   i2c_rxbuf[0] = 0xBE; i2c_start( c - '0' );
+	#endif
 		break;
+
+	#ifdef USE_I2C
+	case 'y' :
+		i2c_enable(); CDC_printf("i2c enabled\n");
+		break;
+	case 'i' :
+		CDC_printf( "cnt=%u, %02x\n", i2c_rxcnt, i2c_rxbuf[0] );
+		break;
+	#endif
+
 	default:	// simple echo
 		CDC_printf( "cmd '%c'\n", ((c>=' ')?(c):('?')) );
 	}
@@ -164,29 +185,28 @@ gpio_encoder_t3_init();
 encoder_init( TIM3 );
 #endif
 
+#ifdef USE_I2C
+i2c_init();
+i2c_addr = 0xD0;
+gpio_i2c1_init();
+#endif
 
-  /* Init Device Library, add supported class and start the library. */
-  if (USBD_Init(&hUsbDeviceFS, &FS_Desc, DEVICE_FS) != USBD_OK)
-  {
-    while(1) {}
-  }
-  if (USBD_RegisterClass(&hUsbDeviceFS, &USBD_HID) != USBD_OK)
-  {
-    while(1) {}
-  }
-  if (USBD_Start(&hUsbDeviceFS) != USBD_OK)
-  {
-    while(1) {}
-  }
-
+#ifdef MIDI_USB
+if	(USBD_Init(&hUsbDeviceFS, &FS_Desc, DEVICE_FS) != USBD_OK)
+	 while(1) {};
+if	(USBD_RegisterClass(&hUsbDeviceFS, &USBD_HID) != USBD_OK)
+	while(1) {};
+if	(USBD_Start(&hUsbDeviceFS) != USBD_OK)
+	while(1) {};
 sys_delay(100);
 cmd_handler( 's' );
-
 USB_DP_pullup( 1 );
 sys_delay(100);
 cmd_handler( 's' );
 sys_delay(100);
 cmd_handler( 's' );
+
+#endif
 
 // // LA GROSSE BOUCLE MAIN LOOP
 int c;
@@ -197,25 +217,30 @@ while (1)
 	// actions immediates
 	if	( ( c = CDC_getcmd() ) > 0 )
 		cmd_handler( c );
+	#ifdef MIDI_USB
 	if	( ( BLUE_PRESS() ) && ( cntblinks < 5 ) )
 		{
 		while( ((USBD_HID_HandleTypeDef *) hUsbDeviceFS.pClassData)->state == HID_BUSY ) { CDC_printf("/"); }
 		USBD_HID_SendReport(&hUsbDeviceFS, midiAllOff, 4);
 		cntblinks = 5;
 		}
+	#endif
 
 	// actions 1 fois par seconde
  	if	(  ( old1Hz != cnt1Hz ) )
  		{
  		old1Hz = cnt1Hz;
 
+	#ifdef ENCODER_TIM
 		short int e = encoder_get(TIM3);
 		CDC_printf( "b=%d, xy=%d:%d, e=%d\n", LL_GPIO_IsInputPinSet(GPIOC, LL_GPIO_PIN_13 ),
 			LL_GPIO_IsInputPinSet(GPIOC, LL_GPIO_PIN_6 ), LL_GPIO_IsInputPinSet(GPIOC, LL_GPIO_PIN_7 ), (int)e );
 		if	( e < 0 ) e = 0;
 		if	( e > 24 ) e = 24;
 		e /= 2;	// cheap encoder in mode X2
+	#endif
 
+	#ifdef MIDI_USB
 		#ifdef DOUBLE_EVENT
 		midiNoteOffOn[6] = 65 + e;		// gamme chromatique sur 1 octave a partir de Fa
 		while( ((USBD_HID_HandleTypeDef *) hUsbDeviceFS.pClassData)->state == HID_BUSY ) { /* CDC_printf(".");*/ }
@@ -232,9 +257,9 @@ while (1)
 		while( ((USBD_HID_HandleTypeDef *) hUsbDeviceFS.pClassData)->state == HID_BUSY ) { /*CDC_printf(":");*/ }
 		USBD_HID_SendReport(&hUsbDeviceFS, midiNoteOn, 4);
 		#endif
-
 		if	( cntblinks == 5 )
-			cntblinks = 1;		// re-armer BLUE_PRESS
+			cntblinks = 1;		// re-armer BLUE_PRESS pour MidiAllOff
+	#endif
 		}
 	}
 }
