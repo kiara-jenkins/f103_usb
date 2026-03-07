@@ -27,11 +27,14 @@
 	- TIM1 est "advanced", on peut vouloir le reserver pour autre chose
 	- pinout : eviter PA11, PA12, PA6(nucleo) reserves pour USB
 			Nucleo		Blue Pill
-		TIM1	PA8,  PA9	PA8,  PA9	FT, UART1
-		TIM2	PA0,  PA1       PA0,  PA1	3.3V, ADC
+		TIM1	PA8*,  PA9*	PA8,  PA9	FT, UART1
+		TIM2	PA0*,  PA1*     PA0,  PA1	3.3V, ADC
 		TIM3	PC6,  PC7       		FT	  	(full remap)
 			(PB4, PB5)      (PB4, PB5)	FT, SPI1, JTAG  (part remap)
 		TIM4	PB6,  PB7       PB6,  PB7	FT, UART1
+			(* = arduino shield)
+
+
 */
 void encoder_init( TIM_TypeDef * Timer )
 {

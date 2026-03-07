@@ -36,5 +36,6 @@
 #define USE_PLL	// 64 MHz (HSI) ou 72 MHZ (HSE, HSE_EXT)
 
 #define BLINK		// tant qu'on utilise pas SPI1
-#define MIDI_USB
-#define ENCODER_TIM	// interface quadratic encoder utilisant un timer
+// #define MIDI_USB
+// #define ENCODER_TIM	// interface quadratic encoder utilisant un timer
+#define USE_I2C		// I2C master

@@ -71,6 +71,7 @@ LL_GPIO_SetPinMode( GPIOC, LL_GPIO_PIN_7, LL_GPIO_MODE_FLOATING );
 }
 #endif
 
+#ifdef MIDI_USB
 #ifdef NUCLEO
 void USB_DP_pullup( int on )	 // (1.5k / PA6)
 {
@@ -81,5 +82,27 @@ if	( on )
 	LL_GPIO_SetPinOutputType( GPIOA, LL_GPIO_PIN_6, LL_GPIO_OUTPUT_PUSHPULL );
 	}
 else	LL_GPIO_SetPinMode(       GPIOA, LL_GPIO_PIN_6, LL_GPIO_MODE_FLOATING );
+}
+#endif
+#endif
+
+#ifdef USE_I2C
+void gpio_sw_i2c_init(void)
+{
+LL_APB2_GRP1_EnableClock( LL_APB2_GRP1_PERIPH_GPIOB );
+// pin PB8 = SCL
+LL_GPIO_SetOutputPin(     GPIOB, LL_GPIO_PIN_8 );
+LL_GPIO_SetPinSpeed(      GPIOB, LL_GPIO_PIN_8, LL_GPIO_SPEED_FREQ_MEDIUM );
+// ENORMOUS GOTCHA HERE : OPENDRAIN doit etre configure APRES output
+// car LL_GPIO_SetPinMode() ECRASE le bit LL_GPIO_OUTPUT_OPENDRAIN
+LL_GPIO_SetPinMode(       GPIOB, LL_GPIO_PIN_8, LL_GPIO_MODE_OUTPUT );
+LL_GPIO_SetPinOutputType( GPIOB, LL_GPIO_PIN_8, LL_GPIO_OUTPUT_OPENDRAIN );
+// pin PB9 = SDA
+LL_GPIO_SetOutputPin(     GPIOB, LL_GPIO_PIN_9 );
+LL_GPIO_SetPinSpeed(      GPIOB, LL_GPIO_PIN_9, LL_GPIO_SPEED_FREQ_MEDIUM );
+// ENORMOUS GOTCHA HERE : OPENDRAIN doit etre configure APRES output
+// car LL_GPIO_SetPinMode() ECRASE le bit LL_GPIO_OUTPUT_OPENDRAIN
+LL_GPIO_SetPinMode(       GPIOB, LL_GPIO_PIN_9, LL_GPIO_MODE_OUTPUT );
+LL_GPIO_SetPinOutputType( GPIOB, LL_GPIO_PIN_9, LL_GPIO_OUTPUT_OPENDRAIN );
 }
 #endif
