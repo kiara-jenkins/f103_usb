@@ -16,7 +16,7 @@ void I2C_init(void)
     I2C_SET_SCL;
 }
 
-void I2C_start_cond(void)
+void I2C_start(void)
 {				// normalement SCL et SDA sont a 1 (idle)
     I2C_SET_SCL			// sinon on envoie un Stop
     I2C_DELAY
@@ -28,7 +28,7 @@ void I2C_start_cond(void)
     I2C_DELAY
 }
 
-void I2C_restart_cond(void)
+void I2C_restart(void)
 {				// normalement SCL est 0 et SDA est libre (ack a ete lu)
     I2C_CLEAR_SCL		// pour etre sur que le Ack est fini
     I2C_SET_SDA			// SDA doit etre libre
@@ -41,7 +41,7 @@ void I2C_restart_cond(void)
     I2C_DELAY
 }
 
-void I2C_stop_cond(void)
+void I2C_stop(void)
 {
     I2C_CLEAR_SDA
     I2C_DELAY
@@ -90,6 +90,7 @@ uint8_t I2C_read_bit(void)
     return b;
 }
 
+/*
 _Bool I2C_write_byte(uint8_t B,
                      _Bool start,
                      _Bool stop)
@@ -97,7 +98,7 @@ _Bool I2C_write_byte(uint8_t B,
     uint8_t ack = 0;
 
     if (start)
-        I2C_start_cond();
+        I2C_start();
 
     uint8_t i;
     for (i = 0; i < 8; i++)
@@ -109,12 +110,28 @@ _Bool I2C_write_byte(uint8_t B,
     ack = I2C_read_bit();
 
     if (stop)
-        I2C_stop_cond();
+        I2C_stop();
+
+    return !ack; // return true if ack
+} */
+
+_Bool I2C_write_1byte(uint8_t B)
+{
+    uint8_t ack = 0;
+
+    uint8_t i;
+    for (i = 0; i < 8; i++)
+    {
+        I2C_write_bit(B & 0x80); // write the most-significant bit
+        B <<= 1;
+    }
+
+    ack = I2C_read_bit();
 
     return !ack; // return true if ack
 }
 
-// Reading a byte with I2C:
+/* Reading a byte with I2C:
 uint8_t I2C_read_byte(_Bool ack, _Bool stop)
 {
     uint8_t B = 0;
@@ -132,12 +149,33 @@ uint8_t I2C_read_byte(_Bool ack, _Bool stop)
         I2C_write_bit(1);
 
     if (stop)
-        I2C_stop_cond();
+        I2C_stop();
+
+    return B;
+}
+*/
+
+uint8_t I2C_read_1byte( uint8_t ack )
+{
+    uint8_t B = 0;
+
+    uint8_t i;
+    for (i = 0; i < 8; i++)
+    {
+        B <<= 1;
+        B |= I2C_read_bit();
+    }
+
+    if (ack)
+        I2C_write_bit(0);
+    else
+        I2C_write_bit(1);
 
     return B;
 }
 
-// Sending a byte with I2C:
+
+/* Sending a byte with I2C:
 _Bool I2C_send_byte(uint8_t address,
                     uint8_t data)
 {
@@ -148,7 +186,7 @@ _Bool I2C_send_byte(uint8_t address,
             return true;
     }
 
-    I2C_stop_cond(); // make sure to impose a stop if NAK'd
+    I2C_stop(); // make sure to impose a stop if NAK'd
     return false;
 }
 
@@ -178,7 +216,7 @@ _Bool I2C_send_byte_data(uint8_t address,
         }
     }
 
-    I2C_stop_cond();
+    I2C_stop();
     return false;
 }
 
@@ -198,7 +236,7 @@ uint8_t I2C_receive_byte_data(uint8_t address,
         }
     }
 
-    I2C_stop_cond();
+    I2C_stop();
     return 0; // return zero if NACKed
 }
 
@@ -221,7 +259,7 @@ _Bool I2C_transmit(uint8_t address, uint8_t data[], uint8_t size)
         }
     }
 
-    I2C_stop_cond();
+    I2C_stop();
     return false;
 }
 
@@ -240,12 +278,12 @@ _Bool I2C_receive(uint8_t address, uint8_t reg[], uint8_t *data, uint8_t reg_siz
             {
                 *data++ = I2C_read_byte(false, false); // read data
             }
-            I2C_stop_cond();
+            I2C_stop();
             return true;
         }
     }
-    I2C_stop_cond();
+    I2C_stop();
     return false;
 }
-
+*/
 #endif

@@ -78,7 +78,7 @@ LL_APB1_GRP1_EnableClock( LL_APB1_GRP1_PERIPH_USART2 );
 if	( LL_RCC_GetAPB1Prescaler() == LL_RCC_APB1_DIV_1 )
 	UART_8_N_1( USART2, SystemCoreClock, bauds );
 else	UART_8_N_1( USART2, SystemCoreClock/2, bauds );	// hyp. si APB1 n'a pas DIV_1, il a DIV_2
-NVIC_init( USART2_IRQn, 10 );
+NVIC_init( USART2_IRQn, 6 );
 NVIC_ClearPendingIRQ( USART2_IRQn );
 /* Enable USART2 Receive interrupts --> USART2_IRQHandler */
 LL_USART_EnableIT_RXNE( USART2 );

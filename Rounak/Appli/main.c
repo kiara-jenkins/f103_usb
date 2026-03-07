@@ -136,52 +136,71 @@ switch	( c )
 		break;
 
 	#ifdef USE_I2C
-	case 'a' :	// test MPU 9250
-		CDC_printf("addr : %d \n", I2C_write_byte( IMU_ADDR, 1, 1 ) );
-		break;
-	case 'b' :
-		CDC_printf("baddr : %d \n", I2C_write_byte( 0xC0, 1, 1 ) );
-		break;
-	case 'r' :
-		if	( I2C_write_byte( IMU_ADDR, 1, 0 ) )
+	case 'a' : {	// test MPU 9250
+		int ak;
+		I2C_start(); ak = I2C_write_1byte( IMU_ADDR ); I2C_stop();
+		CDC_printf("addr : %d \n", ak );
+		} break;
+	case 'b' : {
+		int ak;
+		I2C_start(); ak = I2C_write_1byte( 0xC8 ); I2C_stop();
+		CDC_printf("addr : %d \n", ak );
+		} break;
+	case 'R' : {	// lecture du registre WHO_AM_I avec restart
+		I2C_start(); I2C_write_1byte( IMU_ADDR );
+		if	( I2C_write_1byte( 117 ) )
 			{
-			CDC_printf("IMU addr ok, ");
-			CDC_printf("reg : %d \n", I2C_write_byte( 117, 0, 1 ) );
-			}
-		else	CDC_printf("IMU addr BAD\n");
-		break;
-	case 'R' :	// lecture du registre WHO_AM_I avec restart
-		I2C_write_byte( IMU_ADDR, 1, 0 );
-		if	( I2C_write_byte( 117, 0, 0 ) )
-			{
-			// CDC_printf("IMU reg adr 117 ack, ");
-			I2C_restart_cond();
-			if	( I2C_write_byte( IMU_ADDR + 1, 0, 0 ) )  // addr+1 -> I2C read
+			I2C_restart();
+			if	( I2C_write_1byte( IMU_ADDR + 1 ) )  // addr+1 -> I2C read
 				{
-				// CDC_printf("restart IMU addr ok, ");
-				int va = I2C_read_byte( 0, 1 );
+				int va = I2C_read_1byte( 0 ); I2C_stop();
 				CDC_printf("reg 117 = 0x%02x\n", va );
 				}
 			else	CDC_printf("restart BAD\n");
 			}
 		else	CDC_printf("reg adr 117 NAK\n");
-		break;
-	case 'Q' :	// lecture du registre WHO_AM_I avec stop-start
-		I2C_write_byte( IMU_ADDR, 1, 0 );
-		if	( I2C_write_byte( 117, 0, 1 ) )	// stop
+		} break;
+	case 'Q' : {	// lecture du registre WHO_AM_I avec stop-start
+		I2C_start(); I2C_write_1byte( IMU_ADDR );
+		if	( I2C_write_1byte( 117 ) )
 			{
-			// CDC_printf("IMU reg adr 117 ack, ");
-			if	( I2C_write_byte( IMU_ADDR + 1, 1, 0 ) )  // start
+			I2C_stop(); I2C_start();
+			if	( I2C_write_1byte( IMU_ADDR + 1 ) )
 				{
-				int va = I2C_read_byte( 0, 1 );
+				int va = I2C_read_1byte( 0 ); I2C_stop();
 				CDC_printf("reg 117 = 0x%02x\n", va );
 				}
 			else	CDC_printf("restart BAD\n");
 			}
 		else	CDC_printf("reg adr 117 NAK\n");
+		} break;
+	case 'w' : {	// lecture du registre WOM_Threshold avec restart
+		I2C_start(); I2C_write_1byte( IMU_ADDR );
+		if	( I2C_write_1byte( 31 ) )
+			{
+			I2C_restart();
+			if	( I2C_write_1byte( IMU_ADDR + 1 ) )  // addr+1 -> I2C read
+				{
+				int va = I2C_read_1byte( 0 ); I2C_stop();
+				CDC_printf("reg 31 = 0x%02x\n", va );
+				}
+			else	CDC_printf("restart BAD\n");
+			}
+		else	CDC_printf("reg adr 31 NAK\n");
+		} break;
+	case 'W' :	// ecriture du registre WOM_Threshold
+		I2C_start(); I2C_write_1byte( IMU_ADDR );
+		if	( I2C_write_1byte( 31 ) )
+			{
+			int va = 0x50 + cntblinks;
+			if	( I2C_write_1byte( va ) )
+				{
+				I2C_stop();
+				CDC_printf("writen reg 31 = %02x\n", va );
+				}
+			}
 		break;
 	#endif
-
 	default:	// simple echo
 		CDC_printf( "cmd '%c'\n", ((c>=' ')?(c):('?')) );
 	}
