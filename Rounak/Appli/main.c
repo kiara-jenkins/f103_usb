@@ -101,10 +101,13 @@ switch	( c )
 	case '$' :
 		report_interrupts();
 		break;
+	#ifdef ENCODER_TIM
 	case 'e' :
 		CDC_printf( "b=%d, xy=%d:%d, e=%u\n", LL_GPIO_IsInputPinSet(GPIOC, LL_GPIO_PIN_13 ),
 			LL_GPIO_IsInputPinSet(GPIOC, LL_GPIO_PIN_6 ), LL_GPIO_IsInputPinSet(GPIOC, LL_GPIO_PIN_7 ), encoder_get(TIM3) );
 		break;
+	#endif
+
 	#ifdef MIDI_USB
 	case 's' :
 		/* vu dans usbd_def.h
@@ -130,9 +133,6 @@ switch	( c )
 	case '3' :
 	case '4' :
 	case '5' : cntblinks = c - '0';
-	#ifdef USE_I2C
-
-	#endif
 		break;
 
 	#ifdef USE_I2C
@@ -147,18 +147,10 @@ switch	( c )
 		CDC_printf("addr : %d \n", ak );
 		} break;
 	case 'R' : {	// lecture du registre WHO_AM_I avec restart
-		I2C_start(); I2C_write_1byte( IMU_ADDR );
-		if	( I2C_write_1byte( 117 ) )
-			{
-			I2C_restart();
-			if	( I2C_write_1byte( IMU_ADDR + 1 ) )  // addr+1 -> I2C read
-				{
-				int va = I2C_read_1byte( 0 ); I2C_stop();
-				CDC_printf("reg 117 = 0x%02x\n", va );
-				}
-			else	CDC_printf("restart BAD\n");
-			}
-		else	CDC_printf("reg adr 117 NAK\n");
+		uint32_t vu;
+		uint8_t va;
+		vu = I2C_transaction_read_N_regs( 117, &va, 1 );
+		CDC_printf("read %d bytes from reg 117 (%02x)\n", vu, va );
 		} break;
 	case 'Q' : {	// lecture du registre WHO_AM_I avec stop-start
 		I2C_start(); I2C_write_1byte( IMU_ADDR );
@@ -175,31 +167,23 @@ switch	( c )
 		else	CDC_printf("reg adr 117 NAK\n");
 		} break;
 	case 'w' : {	// lecture du registre WOM_Threshold avec restart
-		I2C_start(); I2C_write_1byte( IMU_ADDR );
-		if	( I2C_write_1byte( 31 ) )
-			{
-			I2C_restart();
-			if	( I2C_write_1byte( IMU_ADDR + 1 ) )  // addr+1 -> I2C read
-				{
-				int va = I2C_read_1byte( 0 ); I2C_stop();
-				CDC_printf("reg 31 = 0x%02x\n", va );
-				}
-			else	CDC_printf("restart BAD\n");
-			}
-		else	CDC_printf("reg adr 31 NAK\n");
+		uint32_t vu;
+		uint8_t va;
+		vu = I2C_transaction_read_N_regs( 31, &va, 1 );
+		CDC_printf("read %d bytes from reg 31 (%02x)\n", vu, va );
 		} break;
-	case 'W' :	// ecriture du registre WOM_Threshold
-		I2C_start(); I2C_write_1byte( IMU_ADDR );
-		if	( I2C_write_1byte( 31 ) )
-			{
-			int va = 0x50 + cntblinks;
-			if	( I2C_write_1byte( va ) )
-				{
-				I2C_stop();
-				CDC_printf("writen reg 31 = %02x\n", va );
-				}
-			}
-		break;
+	case 'W' : {	// ecriture du registre WOM_Threshold
+		uint32_t vu;
+		uint8_t va = 0x70 + cntblinks;
+		vu = I2C_transaction_write_N_regs( 31, &va, 1 );
+		CDC_printf("writen %d bytes to reg 31 (%02x)\n", vu, va );
+		} break;
+	case 'A' : {	// lecture accelerometers
+		uint32_t vu;
+		int16_t va[3];
+		vu = I2C_transaction_read_N_words_16be( 59, (uint16_t *)va, 3 );
+		CDC_printf("got %d values from reg 59 (%5d %5d %5d)\n", vu, va[0], va[1], va[2] );
+		} break;
 	#endif
 	default:	// simple echo
 		CDC_printf( "cmd '%c'\n", ((c>=' ')?(c):('?')) );
@@ -237,7 +221,6 @@ encoder_init( TIM3 );
 #endif
 
 #ifdef USE_I2C
-I2C_init();
 gpio_sw_i2c_init();
 #endif
 

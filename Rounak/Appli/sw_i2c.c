@@ -5,285 +5,102 @@
 #include "sys.h"
 #include "sw_i2c.h"
 
-
-
-#define true 1
-#define false 0
-
-void I2C_init(void)
+///
+///	Byte level
+///
+// write 1 byte, return true if ack from slave
+uint32_t I2C_write_1byte( uint32_t B )
 {
-    I2C_SET_SDA;
-    I2C_SET_SCL;
-}
-
-void I2C_start(void)
-{				// normalement SCL et SDA sont a 1 (idle)
-    I2C_SET_SCL			// sinon on envoie un Stop
-    I2C_DELAY
-    I2C_SET_SDA
-    I2C_DELAY
-    I2C_CLEAR_SDA		// le Start commence ici
-    I2C_DELAY
-    I2C_CLEAR_SCL
-    I2C_DELAY
-}
-
-void I2C_restart(void)
-{				// normalement SCL est 0 et SDA est libre (ack a ete lu)
-    I2C_CLEAR_SCL		// pour etre sur que le Ack est fini
-    I2C_SET_SDA			// SDA doit etre libre
-    I2C_DELAY
-    I2C_SET_SCL			// idle state
-    I2C_DELAY
-    I2C_CLEAR_SDA		// le Start commence ici
-    I2C_DELAY
-    I2C_CLEAR_SCL
-    I2C_DELAY
-}
-
-void I2C_stop(void)
-{
-    I2C_CLEAR_SDA
-    I2C_DELAY
-    I2C_SET_SCL
-    I2C_DELAY
-    I2C_SET_SDA
-    I2C_DELAY
-}
-
-void I2C_write_bit(uint8_t b)
-{
-    if (b > 0)
-        I2C_SET_SDA
-    else
-        I2C_CLEAR_SDA
-
-    I2C_DELAY
-    I2C_SET_SCL
-    I2C_DELAY
-    I2C_CLEAR_SCL
-}
-
-uint8_t I2C_read_SDA(void)
-{
-    if ( I2C_READ_SDA )
-        return 1;
-    else
-        return 0;
-    return 0;
-}
-
-// Reading a bit in I2C:
-uint8_t I2C_read_bit(void)
-{
-    uint8_t b;
-
-    I2C_SET_SDA
-    I2C_DELAY
-    I2C_SET_SCL
-    I2C_DELAY
-
-    b = I2C_read_SDA();
-
-    I2C_CLEAR_SCL
-
-    return b;
-}
-
-/*
-_Bool I2C_write_byte(uint8_t B,
-                     _Bool start,
-                     _Bool stop)
-{
-    uint8_t ack = 0;
-
-    if (start)
-        I2C_start();
-
-    uint8_t i;
-    for (i = 0; i < 8; i++)
-    {
-        I2C_write_bit(B & 0x80); // write the most-significant bit
+uint32_t ack = 0;
+for	( uint32_t i = 0; i < 8; i++ )
+	{
+        I2C_write_bit( B & 0x80 ); // write the most-significant bit
         B <<= 1;
-    }
-
-    ack = I2C_read_bit();
-
-    if (stop)
-        I2C_stop();
-
-    return !ack; // return true if ack
-} */
-
-_Bool I2C_write_1byte(uint8_t B)
-{
-    uint8_t ack = 0;
-
-    uint8_t i;
-    for (i = 0; i < 8; i++)
-    {
-        I2C_write_bit(B & 0x80); // write the most-significant bit
-        B <<= 1;
-    }
-
-    ack = I2C_read_bit();
-
-    return !ack; // return true if ack
+	}
+ack = I2C_read_bit();
+return !ack; // return true if ack
 }
 
-/* Reading a byte with I2C:
-uint8_t I2C_read_byte(_Bool ack, _Bool stop)
+// read 1 byte, give ack to the slave
+uint32_t I2C_read_1byte( uint32_t ack )
 {
-    uint8_t B = 0;
-
-    uint8_t i;
-    for (i = 0; i < 8; i++)
-    {
+uint32_t B = 0;
+for	( uint32_t i = 0; i < 8; i++ )
+	{
         B <<= 1;
         B |= I2C_read_bit();
-    }
-
-    if (ack)
+	}
+if	(ack)
         I2C_write_bit(0);
-    else
+else
         I2C_write_bit(1);
-
-    if (stop)
-        I2C_stop();
-
-    return B;
+return B;
 }
-*/
 
-uint8_t I2C_read_1byte( uint8_t ack )
+///
+///	Register level (8-bit register address)
+///
+
+// Transactions include Start & Stop
+
+// write N bytes, return number of bytes written
+uint32_t I2C_transaction_write_N_regs( uint32_t reg_addr, uint8_t * buf, uint32_t N )
 {
-    uint8_t B = 0;
-
-    uint8_t i;
-    for (i = 0; i < 8; i++)
-    {
-        B <<= 1;
-        B |= I2C_read_bit();
-    }
-
-    if (ack)
-        I2C_write_bit(0);
-    else
-        I2C_write_bit(1);
-
-    return B;
+I2C_start();
+if	( !I2C_write_1byte( IMU_ADDR ) )
+	{ I2C_stop(); return 0; }
+if	( !I2C_write_1byte( reg_addr ) )
+	{ I2C_stop(); return 0; }
+uint32_t i;
+for	( i = 0; i < N; i++ )
+	{
+	if	( !I2C_write_1byte( buf[i] ) )
+		return i;
+	}
+I2C_stop();
+return i;
 }
 
-
-/* Sending a byte with I2C:
-_Bool I2C_send_byte(uint8_t address,
-                    uint8_t data)
+// read N bytes, return number of bytes actually got
+uint32_t I2C_transaction_read_N_regs( uint32_t reg_addr, uint8_t * buf, uint32_t N )
 {
-    if (I2C_write_byte(address, true, false)) // start, send address, write
-    {
-        // send data, stop
-        if (I2C_write_byte(data, false, true))
-            return true;
-    }
-
-    I2C_stop(); // make sure to impose a stop if NAK'd
-    return false;
+I2C_start();
+if	( !I2C_write_1byte( IMU_ADDR ) )
+	{ I2C_stop(); return 0; }
+if	( !I2C_write_1byte( reg_addr ) )
+	{ I2C_stop(); return 0; }
+I2C_restart();
+if	( !I2C_write_1byte( IMU_ADDR | 1 ) )  // addr+1 -> I2C read
+	{ I2C_stop(); return 0; }
+uint32_t i;
+for	( i = 0; i < (N-1); i++ )
+	buf[i] = I2C_read_1byte( 1 );
+buf[i] = I2C_read_1byte( 0 );		// last one, no ack
+I2C_stop();
+return ++i;
 }
 
-// Receiving a byte with a I2C:
-uint8_t I2C_receive_byte(uint8_t address)
+// read N 16-bit words, each one from 2 registers in big endian order, return number of words got
+uint32_t I2C_transaction_read_N_words_16be( uint32_t reg_addr, uint16_t * buf, uint32_t N )
 {
-    if (I2C_write_byte( address | 0x01, true, false)) // start, send address, read
-    {
-        return I2C_read_byte(false, true);
-    }
-
-    return 0; // return zero if NAK'd
+I2C_start();
+if	( !I2C_write_1byte( IMU_ADDR ) )
+	{ I2C_stop(); return 0; }
+if	( !I2C_write_1byte( reg_addr ) )
+	{ I2C_stop(); return 0; }
+I2C_restart();
+if	( !I2C_write_1byte( IMU_ADDR | 1 ) )  // addr+1 -> I2C read
+	{ I2C_stop(); return 0; }
+uint32_t i;
+for	( i = 0; i < (N-1); i++ )
+	{
+	buf[i]  = I2C_read_1byte( 1 ) << 8;
+	buf[i] |= I2C_read_1byte( 1 );
+	}
+buf[i]  = I2C_read_1byte( 1 ) << 8;
+buf[i] |= I2C_read_1byte( 0 );		// last byte, no ack
+I2C_stop();
+return ++i;
 }
 
-// Sending a byte of data with I2C:
-_Bool I2C_send_byte_data(uint8_t address,
-                         uint8_t reg,
-                         uint8_t data)
-{
-    //   start, send address, write
-    if (I2C_write_byte( address, true, false ) )
-    {
-        if (I2C_write_byte(reg, false, false)) // send desired register
-        {
-            if (I2C_write_byte(data, false, true))
-                return true; // send data, stop
-        }
-    }
-
-    I2C_stop();
-    return false;
-}
-
-// Receiving a byte of data with I2C:
-uint8_t I2C_receive_byte_data(uint8_t address,
-                              uint8_t reg)
-{
-    // start, send address, write, restart, read
-    if (I2C_write_byte(address, true, false))
-    {
-        if (I2C_write_byte(reg, false, false)) // send desired register
-        {
-            if (I2C_write_byte( address | 0x01, true, false)) // start again, send address, read
-            {
-                return I2C_read_byte(false, true); // read data
-            }
-        }
-    }
-
-    I2C_stop();
-    return 0; // return zero if NACKed
-}
-
-_Bool I2C_transmit(uint8_t address, uint8_t data[], uint8_t size)
-{
-    if (I2C_write_byte(address, true, false)) // first byte
-    {
-        for (int i = 0; i < size; i++)
-        {
-            if (i == size - 1)
-            {
-                if (I2C_write_byte(data[i], false, true))
-                    return true;
-            }
-            else
-            {
-                if (!I2C_write_byte(data[i], false, false))
-                    break; //last byte
-            }
-        }
-    }
-
-    I2C_stop();
-    return false;
-}
-
-_Bool I2C_receive(uint8_t address, uint8_t reg[], uint8_t *data, uint8_t reg_size, uint8_t size)
-{
-    if (I2C_write_byte(address, true, false))
-    {
-        for (int i = 0; i < reg_size; i++)
-        {
-            if (!I2C_write_byte(reg[i], false, false))
-                break;
-        }
-        if (I2C_write_byte(address | 0x01, true, false)) // start again, send address, read (LSB signifies R or W)
-        {
-            for (int j = 0; j < size; j++)
-            {
-                *data++ = I2C_read_byte(false, false); // read data
-            }
-            I2C_stop();
-            return true;
-        }
-    }
-    I2C_stop();
-    return false;
-}
-*/
 #endif
