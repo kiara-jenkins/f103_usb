@@ -106,3 +106,15 @@ LL_GPIO_SetPinMode(       GPIOB, LL_GPIO_PIN_9, LL_GPIO_MODE_OUTPUT );
 LL_GPIO_SetPinOutputType( GPIOB, LL_GPIO_PIN_9, LL_GPIO_OUTPUT_OPENDRAIN );
 }
 #endif
+
+#ifdef USE_ADC_4CH
+void gpio_adc4_init(void)
+{
+// analog in sur PA0 (ch0), PA1 (ch1), PBO (ch8) (shield : A0, A1, A3)
+LL_APB2_GRP1_EnableClock( LL_APB2_GRP1_PERIPH_GPIOA );
+LL_GPIO_SetPinMode(       GPIOA, LL_GPIO_PIN_0, LL_GPIO_MODE_ANALOG );
+LL_GPIO_SetPinMode(       GPIOA, LL_GPIO_PIN_1, LL_GPIO_MODE_ANALOG );
+LL_APB2_GRP1_EnableClock( LL_APB2_GRP1_PERIPH_GPIOB );
+LL_GPIO_SetPinMode(       GPIOB, LL_GPIO_PIN_0, LL_GPIO_MODE_ANALOG );
+}
+#endif

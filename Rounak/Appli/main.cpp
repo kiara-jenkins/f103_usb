@@ -16,6 +16,7 @@
 #include "uarts.h"
 #include "encoder.h"
 #include "sw_i2c.h"
+#include "adc.h"
 #include "CDC.h"
 #include "mpu9250_constants.h"
 
@@ -109,6 +110,21 @@ switch	( c )
 		break;
 	#endif
 
+	#ifdef USE_ADC_4CH
+	case 'k' :
+		adc_timer_stop();
+		CDC_printf("adc timer stopped\n");
+		break;
+	case 'c' :
+		adc_calib();
+		CDC_printf("adc calibrated\n");
+		break;
+	case 'C' :
+		adc_timer_init( SystemCoreClock / ADCFREQ );
+		CDC_printf("adc timer started\n");
+		break;
+	#endif
+
 	#ifdef MIDI_USB
 	case 's' :
 		/* vu dans usbd_def.h
@@ -118,7 +134,7 @@ switch	( c )
 		#define USBD_STATE_SUSPENDED                            0x04U
 		c'est hUsbDeviceFS.dev_state !! eureka !!
 		*/
-		CDC_printf( "status %u %u %u %u %u\n",
+		CDC_printf("status %u %u %u %u %u\n",
 			hUsbDeviceFS.dev_config_status,
 			hUsbDeviceFS.dev_state,
 			hUsbDeviceFS.dev_connection_status,
@@ -234,6 +250,12 @@ CDC_printf("Hello je suis imposant\n");
 #ifdef ENCODER_TIM
 gpio_encoder_t3_init();
 encoder_init( TIM3 );
+#else
+#ifdef USE_ADC_4CH
+gpio_adc4_init();
+adc_init();
+// adc_timer_init( SystemCoreClock / ADCFREQ );	// 1ms
+#endif
 #endif
 
 #ifdef USE_I2C
@@ -265,12 +287,23 @@ while (1)
 	// actions immediates
 	if	( ( c = CDC_getcmd() ) > 0 )
 		cmd_handler( c );
+	#ifdef MIDI_USB
 	if	( ( BLUE_PRESS() ) && ( cntblinks < 5 ) )
 		{
 		while( ((USBD_HID_HandleTypeDef *) hUsbDeviceFS.pClassData)->state == HID_BUSY ) { CDC_printf("/"); }
 		USBD_HID_SendReport(&hUsbDeviceFS, midiAllOff, 4);
 		cntblinks = 5;
 		}
+	#endif
+
+	#ifdef USE_ADC_4CH
+	if	( adc_res_ready == 2 )
+		{
+		CDC_printf( "adc %u %u %u\n", adc1_res0/CHANFIR, adc2_res0/CHANFIR, adc1_res1/CHANFIR );
+		// CDC_printf( "adc %u %u %u\n", adc1_res0, adc2_res0, adc1_res1 );
+		adc_res_ready = 0;
+		}
+	#endif
 
 	// actions 1 fois par seconde
  	if	(  ( old1Hz != cnt1Hz ) )
@@ -294,7 +327,7 @@ while (1)
 		midiNoteOffOn[2] = midiNoteOffOn[6];				// pret pour le prochain tour
 		#else
 		unsigned int finedelay = ( 2 * 72000 ) / 3;	// 72000 = 1ms (ne pas depasser 4ms)
-		midiNoteOn[2] = 65 + e;		// gamme chromatique sur 1 octave a partir de Fa
+		// midiNoteOn[2] = 65 + e;		// encoder -> gamme chromatique sur 1 octave a partir de Fa
 		// Make sure the USB functions are not BUSY before sending the MIDI Message
 		while( ((USBD_HID_HandleTypeDef *) hUsbDeviceFS.pClassData)->state == HID_BUSY ) { /* CDC_printf(".");*/ }
 		USBD_HID_SendReport(&hUsbDeviceFS, midiNoteOff, 4);	// note off etait prepare lors du note on precedent ;-)
