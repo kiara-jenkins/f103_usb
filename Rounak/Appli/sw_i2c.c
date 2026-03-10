@@ -44,10 +44,10 @@ return B;
 // Transactions include Start & Stop
 
 // write N bytes, return number of bytes written
-uint32_t I2C_transaction_write_N_regs( uint32_t reg_addr, uint8_t * buf, uint32_t N )
+uint32_t I2C_transaction_write_N_regs( uint32_t slave_addr, uint32_t reg_addr, uint32_t N, uint8_t * buf )
 {
 I2C_start();
-if	( !I2C_write_1byte( IMU_ADDR ) )
+if	( !I2C_write_1byte( slave_addr ) )
 	{ I2C_stop(); return 0; }
 if	( !I2C_write_1byte( reg_addr ) )
 	{ I2C_stop(); return 0; }
@@ -62,15 +62,15 @@ return i;
 }
 
 // read N bytes, return number of bytes actually got
-uint32_t I2C_transaction_read_N_regs( uint32_t reg_addr, uint8_t * buf, uint32_t N )
+uint32_t I2C_transaction_read_N_regs( uint32_t slave_addr, uint32_t reg_addr, uint32_t N, uint8_t * buf )
 {
 I2C_start();
-if	( !I2C_write_1byte( IMU_ADDR ) )
+if	( !I2C_write_1byte( slave_addr ) )
 	{ I2C_stop(); return 0; }
 if	( !I2C_write_1byte( reg_addr ) )
 	{ I2C_stop(); return 0; }
 I2C_restart();
-if	( !I2C_write_1byte( IMU_ADDR | 1 ) )  // addr+1 -> I2C read
+if	( !I2C_write_1byte( slave_addr | 1 ) )  // addr+1 -> I2C read
 	{ I2C_stop(); return 0; }
 uint32_t i;
 for	( i = 0; i < (N-1); i++ )
@@ -81,15 +81,15 @@ return ++i;
 }
 
 // read N 16-bit words, each one from 2 registers in big endian order, return number of words got
-uint32_t I2C_transaction_read_N_words_16be( uint32_t reg_addr, uint16_t * buf, uint32_t N )
+uint32_t I2C_transaction_read_N_words_16be( uint32_t slave_addr, uint32_t reg_addr, uint32_t N, uint16_t * buf )
 {
 I2C_start();
-if	( !I2C_write_1byte( IMU_ADDR ) )
+if	( !I2C_write_1byte( slave_addr ) )
 	{ I2C_stop(); return 0; }
 if	( !I2C_write_1byte( reg_addr ) )
 	{ I2C_stop(); return 0; }
 I2C_restart();
-if	( !I2C_write_1byte( IMU_ADDR | 1 ) )  // addr+1 -> I2C read
+if	( !I2C_write_1byte( slave_addr | 1 ) )  // addr+1 -> I2C read
 	{ I2C_stop(); return 0; }
 uint32_t i;
 for	( i = 0; i < (N-1); i++ )

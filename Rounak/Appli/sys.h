@@ -17,11 +17,24 @@ void sys_delay( uint32_t delay );
 void tickdelay( unsigned int tickd );
 
 // temporisation base sur DWT cycle counter (cf core_cm3.h et ARMv7-M_ARM.pdf p. C1-49)
-// unites en periodes d'horloge HCLK
-__STATIC_INLINE void DWT_Delay_us(volatile uint32_t microseconds)
+// unites en periodes d'horloge CPU (s'arrête-t-il en sleep ?)  NOT TESTED 
+/* peut necessiter un rituel d'initialisation :
+  CoreDebug->DEMCR &= ~CoreDebug_DEMCR_TRCENA_Msk;
+  CoreDebug->DEMCR |=  CoreDebug_DEMCR_TRCENA_Msk;
+  DWT->CTRL &= ~DWT_CTRL_CYCCNTENA_Msk;
+  DWT->CTRL |=  DWT_CTRL_CYCCNTENA_Msk;
+  DWT->CYCCNT = 0;
+  // verifier qu'il tourne !
+  __ASM volatile ("NOP");
+  __ASM volatile ("NOP");
+  __ASM volatile ("NOP");
+  if (DWT->CYCCNT) return 0; // ok
+  else             return 1; // fail
+*/
+__STATIC_INLINE void DWT_delay(volatile uint32_t cycles)
 {
 uint32_t clk_cycle_start = DWT->CYCCNT;
-while	( ( DWT->CYCCNT - clk_cycle_start ) < microseconds )
+while	( ( DWT->CYCCNT - clk_cycle_start ) < cycles )
 	{};
 }
 

@@ -1,5 +1,4 @@
 
-#define IMU_ADDR 0xD0	// MPU 9250, already shifted left, pin AD0 grounded
 
 // pin PB9 = SDA
 #define I2C_CLEAR_SDA	LL_GPIO_ResetOutputPin( GPIOB, LL_GPIO_PIN_9 );
@@ -100,6 +99,9 @@ I2C_scl0();
 return b;
 }
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 // write 1 byte, return ack from slave
 uint32_t I2C_write_1byte( uint32_t B);
@@ -111,10 +113,15 @@ uint32_t I2C_read_1byte( uint32_t ack );
 // Transactions include Start & Stop
 
 // write N bytes, return number of bytes written
-uint32_t I2C_transaction_write_N_regs( uint32_t reg_addr, uint8_t * buf, uint32_t N );
+uint32_t I2C_transaction_write_N_regs( uint32_t slave_addr, uint32_t reg_addr, uint32_t N, uint8_t * buf );
 
 // read N bytes, return number of bytes actually got
-uint32_t I2C_transaction_read_N_regs( uint32_t reg_addr, uint8_t * buf, uint32_t N );
+uint32_t I2C_transaction_read_N_regs( uint32_t slave_addr, uint32_t reg_addr, uint32_t N, uint8_t * buf );
 
 // read N 16-bit words, each one from 2 registers in big endian order, return number of words got
-uint32_t I2C_transaction_read_N_words_16be( uint32_t reg_addr, uint16_t * buf, uint32_t N );
+uint32_t I2C_transaction_read_N_words_16be( uint32_t slave_addr, uint32_t reg_addr, uint32_t N, uint16_t * buf );
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
+

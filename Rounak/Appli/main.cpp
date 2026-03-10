@@ -17,6 +17,7 @@
 #include "encoder.h"
 #include "sw_i2c.h"
 #include "CDC.h"
+#include "mpu9250_constants.h"
 
 // // static data
 USBD_HandleTypeDef hUsbDeviceFS;
@@ -138,7 +139,7 @@ switch	( c )
 	#ifdef USE_I2C
 	case 'a' : {	// test MPU 9250
 		int ak;
-		I2C_start(); ak = I2C_write_1byte( IMU_ADDR ); I2C_stop();
+		I2C_start(); ak = I2C_write_1byte( MPU9250_ADDRESS ); I2C_stop();
 		CDC_printf("addr : %d \n", ak );
 		} break;
 	case 'b' : {
@@ -146,44 +147,59 @@ switch	( c )
 		I2C_start(); ak = I2C_write_1byte( 0xC8 ); I2C_stop();
 		CDC_printf("addr : %d \n", ak );
 		} break;
-	case 'R' : {	// lecture du registre WHO_AM_I avec restart
+	case 'R' : {	// lecture du registre WHO_AM_I avec restart (expect 0x71)
 		uint32_t vu;
 		uint8_t va;
-		vu = I2C_transaction_read_N_regs( 117, &va, 1 );
-		CDC_printf("read %d bytes from reg 117 (%02x)\n", vu, va );
+		vu = I2C_transaction_read_N_regs( MPU9250_ADDRESS, WHO_AM_I_MPU9250, 1, &va );
+		CDC_printf("read %d bytes from reg WHO_AM_I_MPU9250 (%02x)\n", vu, va );
 		} break;
-	case 'Q' : {	// lecture du registre WHO_AM_I avec stop-start
-		I2C_start(); I2C_write_1byte( IMU_ADDR );
-		if	( I2C_write_1byte( 117 ) )
+	case 'Q' : {	// lecture du registre WHO_AM_I avec stop-start (expect 0x71)
+		I2C_start(); I2C_write_1byte( MPU9250_ADDRESS );
+		if	( I2C_write_1byte( WHO_AM_I_MPU9250 ) )
 			{
 			I2C_stop(); I2C_start();
-			if	( I2C_write_1byte( IMU_ADDR + 1 ) )
+			if	( I2C_write_1byte( MPU9250_ADDRESS + 1 ) )
 				{
 				int va = I2C_read_1byte( 0 ); I2C_stop();
-				CDC_printf("reg 117 = 0x%02x\n", va );
+				CDC_printf("reg WHO_AM_I_MPU9250 = 0x%02x\n", va );
 				}
 			else	CDC_printf("restart BAD\n");
 			}
-		else	CDC_printf("reg adr 117 NAK\n");
+		else	CDC_printf("reg adr WHO_AM_I_MPU9250 NAK\n");
 		} break;
 	case 'w' : {	// lecture du registre WOM_Threshold avec restart
 		uint32_t vu;
 		uint8_t va;
-		vu = I2C_transaction_read_N_regs( 31, &va, 1 );
-		CDC_printf("read %d bytes from reg 31 (%02x)\n", vu, va );
+		vu = I2C_transaction_read_N_regs( MPU9250_ADDRESS, WOM_THR, 1, &va );
+		CDC_printf("read %d bytes from reg WOM_THR (%02x)\n", vu, va );
 		} break;
 	case 'W' : {	// ecriture du registre WOM_Threshold
 		uint32_t vu;
 		uint8_t va = 0x70 + cntblinks;
-		vu = I2C_transaction_write_N_regs( 31, &va, 1 );
-		CDC_printf("writen %d bytes to reg 31 (%02x)\n", vu, va );
+		vu = I2C_transaction_write_N_regs( MPU9250_ADDRESS, WOM_THR, 1, &va );
+		CDC_printf("writen %d bytes to reg WOM_THR (%02x)\n", vu, va );
 		} break;
 	case 'A' : {	// lecture accelerometers
 		uint32_t vu;
 		int16_t va[3];
-		vu = I2C_transaction_read_N_words_16be( 59, (uint16_t *)va, 3 );
-		CDC_printf("got %d values from reg 59 (%5d %5d %5d)\n", vu, va[0], va[1], va[2] );
+		vu = I2C_transaction_read_N_words_16be( MPU9250_ADDRESS, ACCEL_XOUT_H, 3, (uint16_t *)va );
+		CDC_printf("got %d values from accel (%5d %5d %5d)\n", vu, va[0], va[1], va[2] );
 		} break;
+	case 'G' : {	// lecture gyros
+		uint32_t vu;
+		int16_t va[3];
+		vu = I2C_transaction_read_N_words_16be( MPU9250_ADDRESS, GYRO_XOUT_H, 3, (uint16_t *)va );
+		CDC_printf("got %d values from gyro (%5d %5d %5d)\n", vu, va[0], va[1], va[2] );
+		} break;
+	case 'm' : {	// lecture ID magneto (expect 0x48)
+		uint32_t vu;
+		uint8_t va = 0x02;	// I2C bypass mode aka Pass-Through
+		vu = I2C_transaction_write_N_regs( MPU9250_ADDRESS, INT_PIN_CFG, 1, &va );
+		CDC_printf("writen %d bytes to reg INT_PIN_CFG (%02x)\n", vu, va );
+		vu = I2C_transaction_read_N_regs( AK8963_ADDRESS, AK8963_WHO_AM_I, 1, &va );
+		CDC_printf("read %d bytes from reg AK8963_WHO_AM_I (%02x)\n", vu, va );
+		} break;
+
 	#endif
 	default:	// simple echo
 		CDC_printf( "cmd '%c'\n", ((c>=' ')?(c):('?')) );
