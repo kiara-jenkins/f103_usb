@@ -97,8 +97,21 @@ void cmd_handler( int c )
 {
 switch	( c )
 	{
+	case '#' :
+		CoreDebug->DEMCR &= ~CoreDebug_DEMCR_TRCENA_Msk;	// p. C1-24
+		CoreDebug->DEMCR |=  CoreDebug_DEMCR_TRCENA_Msk;
+		DWT->CTRL &= ~DWT_CTRL_CYCCNTENA_Msk;
+		DWT->CTRL |=  DWT_CTRL_CYCCNTENA_Msk;
+		DWT->CYCCNT = 0;
+		__ASM volatile ("NOP");
+		__ASM volatile ("NOP");
+		__ASM volatile ("NOP");
+		tickdelay( 5000 );
+		CDC_printf( "DWT running ? %u\n", DWT->CYCCNT );
+		break;
 	case '&' :
-		CDC_printf( "HCLK %u\n", SystemCoreClock );
+		CDC_printf( "HCLK %u, DWT %u\n", SystemCoreClock, DWT->CYCCNT );
+		DWT->CYCCNT = 0;
 		break;
 	case '$' :
 		report_interrupts();
@@ -106,7 +119,7 @@ switch	( c )
 	#ifdef ENCODER_TIM
 	case 'e' :
 		CDC_printf( "b=%d, xy=%d:%d, e=%u\n", LL_GPIO_IsInputPinSet(GPIOC, LL_GPIO_PIN_13 ),
-			LL_GPIO_IsInputPinSet(GPIOC, LL_GPIO_PIN_6 ), LL_GPIO_IsInputPinSet(GPIOC, LL_GPIO_PIN_7 ), encoder_get(TIM3) );
+			LL_GPIO_IsInputPinSet(GPIOA, LL_GPIO_PIN_8 ), LL_GPIO_IsInputPinSet(GPIOA, LL_GPIO_PIN_9 ), encoder_get(TIM1) );
 		break;
 	#endif
 
@@ -254,15 +267,15 @@ CDC_printf("Hello je suis imposant\n");
 #endif
 
 #ifdef ENCODER_TIM
-gpio_encoder_t3_init();
-encoder_init( TIM3 );
-#else
+gpio_encoder_t1_init();
+encoder_init( TIM1 );
+#endif
+
 #ifdef USE_ADC_4CH
 gpio_adc4_init();
 adc_init();
 adc_calib();
 adc_timer_init( SystemCoreClock / ADCFREQ );
-#endif
 #endif
 
 #ifdef USE_I2C
@@ -321,33 +334,32 @@ while (1)
  	if	(  ( old1Hz != cnt1Hz ) )
  		{
  		old1Hz = cnt1Hz;
+ 		CDC_printf( "%u s DWT test %u\n", cnt1Hz, DWT->CYCCNT / SystemCoreClock );
 
 	#ifdef ENCODER_TIM
-		short int e = encoder_get(TIM3);
-		CDC_printf( "b=%d, xy=%d:%d, e=%d\n", LL_GPIO_IsInputPinSet(GPIOC, LL_GPIO_PIN_13 ),
-			LL_GPIO_IsInputPinSet(GPIOC, LL_GPIO_PIN_6 ), LL_GPIO_IsInputPinSet(GPIOC, LL_GPIO_PIN_7 ), (int)e );
-		if	( e < 0 ) e = 0;
-		if	( e > 24 ) e = 24;
-		e /= 2;	// cheap encoder in mode X2
+		short int e = encoder_get(TIM1);
+		//CDC_printf( "b=%d, xy=%d:%d, e=%u\n", LL_GPIO_IsInputPinSet(GPIOC, LL_GPIO_PIN_13 ),
+		//	LL_GPIO_IsInputPinSet(GPIOA, LL_GPIO_PIN_8 ), LL_GPIO_IsInputPinSet(GPIOA, LL_GPIO_PIN_9 ), e );
+		// bornage pour MIDI
+		e /= 4;	// cheap encoder in mode X4
+		midiNoteOn[2] = midiNoteOffOn[6] = 65 + ( (e+100000000) % 13 );		// encoder -> gamme chromatique sur 1 octave a partir de Fa
 	#endif
 
 	#ifdef MIDI_USB
 		if	( hUsbDeviceFS.dev_state == 3 )
 			{
 		#ifdef DOUBLE_EVENT
-			midiNoteOffOn[6] = 65 + e;		// gamme chromatique sur 1 octave a partir de Fa
 			while( ((USBD_HID_HandleTypeDef *) hUsbDeviceFS.pClassData)->state == HID_BUSY ) { /* CDC_printf(".");*/ }
 			USBD_HID_SendReport(&hUsbDeviceFS, midiNoteOffOn, 8);	// note off etait prepare lors du note on precedent ;-)
 			midiNoteOffOn[2] = midiNoteOffOn[6];				// pret pour le prochain tour
 		#else
 			unsigned int finedelay = ( 2 * 72000 ) / 3;	// 72000 = 1ms (ne pas depasser 4ms)
-			// midiNoteOn[2] = 65 + e;		// encoder -> gamme chromatique sur 1 octave a partir de Fa
 			// Make sure the USB functions are not BUSY before sending the MIDI Message
-			while( ((USBD_HID_HandleTypeDef *) hUsbDeviceFS.pClassData)->state == HID_BUSY ) { /* CDC_printf(".");*/ }
+			while( ((USBD_HID_HandleTypeDef *) hUsbDeviceFS.pClassData)->state == HID_BUSY ) { CDC_printf("."); }
 			USBD_HID_SendReport(&hUsbDeviceFS, midiNoteOff, 4);	// note off etait prepare lors du note on precedent ;-)
 			midiNoteOff[2] = midiNoteOn[2];				// pret pour le prochain tour
 			tickdelay( finedelay );
-			while( ((USBD_HID_HandleTypeDef *) hUsbDeviceFS.pClassData)->state == HID_BUSY ) { /*CDC_printf(":");*/ }
+			while( ((USBD_HID_HandleTypeDef *) hUsbDeviceFS.pClassData)->state == HID_BUSY ) { CDC_printf(":"); }
 			USBD_HID_SendReport(&hUsbDeviceFS, midiNoteOn, 4);
 		#endif
 			}

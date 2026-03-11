@@ -69,6 +69,16 @@ LL_GPIO_AF_EnableRemap_TIM3();
 LL_GPIO_SetPinMode( GPIOC, LL_GPIO_PIN_6, LL_GPIO_MODE_FLOATING );
 LL_GPIO_SetPinMode( GPIOC, LL_GPIO_PIN_7, LL_GPIO_MODE_FLOATING );
 }
+// TIM1 encoder interface PA8, PA9 en ALTERNATE
+// N.B. ALTERNATE est pin par pin, non necessaire pour input
+void gpio_encoder_t1_init(void)
+{
+LL_APB2_GRP1_EnableClock( LL_APB2_GRP1_PERIPH_GPIOA );
+// mode ALTERNATE necessaire seulement pour outputs, semble-t-il
+LL_GPIO_SetPinMode( GPIOA, LL_GPIO_PIN_8, LL_GPIO_MODE_FLOATING );
+LL_GPIO_SetPinMode( GPIOA, LL_GPIO_PIN_9, LL_GPIO_MODE_FLOATING );
+}
+
 #endif
 
 #ifdef MIDI_USB

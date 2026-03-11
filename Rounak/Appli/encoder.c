@@ -49,8 +49,8 @@ else			  LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_TIM4);
 LL_TIM_ENCODER_InitTypeDef encoder_params;
 // X4 signifie 4 cnts par cycle <==> tous les fronts actionnent le compteur
 // X2 signifie 2 cnts par cycle <==> les fronts d'un seul input actionnent le compteur
-//encoder_params.EncoderMode    = LL_TIM_ENCODERMODE_X4_TI12;	// precision encoder
-encoder_params.EncoderMode    = LL_TIM_ENCODERMODE_X2_TI1;	// cheap encoder
+encoder_params.EncoderMode    = LL_TIM_ENCODERMODE_X4_TI12;	// precision encoder
+//encoder_params.EncoderMode    = LL_TIM_ENCODERMODE_X2_TI1;	// cheap encoder
 //encoder_params.EncoderMode    = LL_TIM_ENCODERMODE_X2_TI2;	// cheap encoder
 encoder_params.IC1Polarity    = LL_TIM_IC_POLARITY_RISING;
 encoder_params.IC1ActiveInput = LL_TIM_ACTIVEINPUT_DIRECTTI;
