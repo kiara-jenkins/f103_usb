@@ -115,13 +115,19 @@ switch	( c )
 		adc_timer_stop();
 		CDC_printf("adc timer stopped\n");
 		break;
-	case 'c' :
-		adc_calib();
-		CDC_printf("adc calibrated\n");
-		break;
-	case 'C' :
+	case 't' :
 		adc_timer_init( SystemCoreClock / ADCFREQ );
 		CDC_printf("adc timer started\n");
+		break;
+	case 'K' :
+		adc_timer_stop();
+		adc_calib();
+		adc_timer_init( SystemCoreClock / ADCFREQ );
+		CDC_printf( "Stop-Calib-Start Done\n" );
+		break;
+	case 'u' :
+		adc_uncalib();
+		CDC_printf("adc uncalibrated\n");
 		break;
 	#endif
 
@@ -254,7 +260,8 @@ encoder_init( TIM3 );
 #ifdef USE_ADC_4CH
 gpio_adc4_init();
 adc_init();
-// adc_timer_init( SystemCoreClock / ADCFREQ );	// 1ms
+adc_calib();
+adc_timer_init( SystemCoreClock / ADCFREQ );
 #endif
 #endif
 
@@ -299,8 +306,13 @@ while (1)
 	#ifdef USE_ADC_4CH
 	if	( adc_res_ready == 2 )
 		{
-		CDC_printf( "adc %u %u %u\n", adc1_res0/CHANFIR, adc2_res0/CHANFIR, adc1_res1/CHANFIR );
-		// CDC_printf( "adc %u %u %u\n", adc1_res0, adc2_res0, adc1_res1 );
+		const uint32_t mVref = 1200;
+		uint32_t ref = adc1_res1;
+		uint32_t x = ( mVref * adc2_res0 ) / ref;
+		uint32_t y = ( mVref * adc1_res0 ) / ref;
+		uint32_t v = ( mVref * 4095 * CHANFIR ) / ref;
+		CDC_printf( "adc X:Y = %4u : %4u mV, Vdd = %4u mV\n", x, y, v );
+		// CDC_printf( "adc %u %u %u\n", adc1_res0/CHANFIR, adc2_res0/CHANFIR, adc1_res1/CHANFIR );
 		adc_res_ready = 0;
 		}
 	#endif
@@ -320,22 +332,25 @@ while (1)
 	#endif
 
 	#ifdef MIDI_USB
+		if	( hUsbDeviceFS.dev_state == 3 )
+			{
 		#ifdef DOUBLE_EVENT
-		midiNoteOffOn[6] = 65 + e;		// gamme chromatique sur 1 octave a partir de Fa
-		while( ((USBD_HID_HandleTypeDef *) hUsbDeviceFS.pClassData)->state == HID_BUSY ) { /* CDC_printf(".");*/ }
-		USBD_HID_SendReport(&hUsbDeviceFS, midiNoteOffOn, 8);	// note off etait prepare lors du note on precedent ;-)
-		midiNoteOffOn[2] = midiNoteOffOn[6];				// pret pour le prochain tour
+			midiNoteOffOn[6] = 65 + e;		// gamme chromatique sur 1 octave a partir de Fa
+			while( ((USBD_HID_HandleTypeDef *) hUsbDeviceFS.pClassData)->state == HID_BUSY ) { /* CDC_printf(".");*/ }
+			USBD_HID_SendReport(&hUsbDeviceFS, midiNoteOffOn, 8);	// note off etait prepare lors du note on precedent ;-)
+			midiNoteOffOn[2] = midiNoteOffOn[6];				// pret pour le prochain tour
 		#else
-		unsigned int finedelay = ( 2 * 72000 ) / 3;	// 72000 = 1ms (ne pas depasser 4ms)
-		// midiNoteOn[2] = 65 + e;		// encoder -> gamme chromatique sur 1 octave a partir de Fa
-		// Make sure the USB functions are not BUSY before sending the MIDI Message
-		while( ((USBD_HID_HandleTypeDef *) hUsbDeviceFS.pClassData)->state == HID_BUSY ) { /* CDC_printf(".");*/ }
-		USBD_HID_SendReport(&hUsbDeviceFS, midiNoteOff, 4);	// note off etait prepare lors du note on precedent ;-)
-		midiNoteOff[2] = midiNoteOn[2];				// pret pour le prochain tour
-		tickdelay( finedelay );
-		while( ((USBD_HID_HandleTypeDef *) hUsbDeviceFS.pClassData)->state == HID_BUSY ) { /*CDC_printf(":");*/ }
-		USBD_HID_SendReport(&hUsbDeviceFS, midiNoteOn, 4);
+			unsigned int finedelay = ( 2 * 72000 ) / 3;	// 72000 = 1ms (ne pas depasser 4ms)
+			// midiNoteOn[2] = 65 + e;		// encoder -> gamme chromatique sur 1 octave a partir de Fa
+			// Make sure the USB functions are not BUSY before sending the MIDI Message
+			while( ((USBD_HID_HandleTypeDef *) hUsbDeviceFS.pClassData)->state == HID_BUSY ) { /* CDC_printf(".");*/ }
+			USBD_HID_SendReport(&hUsbDeviceFS, midiNoteOff, 4);	// note off etait prepare lors du note on precedent ;-)
+			midiNoteOff[2] = midiNoteOn[2];				// pret pour le prochain tour
+			tickdelay( finedelay );
+			while( ((USBD_HID_HandleTypeDef *) hUsbDeviceFS.pClassData)->state == HID_BUSY ) { /*CDC_printf(":");*/ }
+			USBD_HID_SendReport(&hUsbDeviceFS, midiNoteOn, 4);
 		#endif
+			}
 		if	( cntblinks == 5 )
 			cntblinks = 1;		// re-armer BLUE_PRESS
 	#endif

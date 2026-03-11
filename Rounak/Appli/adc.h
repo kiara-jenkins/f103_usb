@@ -8,7 +8,7 @@
 
 // Fsamp  pour 1 canal = ADCFREQ / 2
 // Fcycle = Fsamp / CHANFIR = 0.5 * ADCFREQ / CHANFIR
-#define CHANFIR		500		// ordre du FIR de chaque canal, determine la periodicite des resultats
+#define CHANFIR		250		// ordre du FIR de chaque canal, determine la periodicite des resultats
 #define TOTFIR		(2*CHANFIR)	// cycle complet
 #define ADCFREQ		2000		// 2 kHz ==> 1 ksamp/s pour chaque canal avant FIR
 

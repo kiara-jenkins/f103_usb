@@ -201,29 +201,35 @@ LL_ADC_Enable( ADC2 );
 void adc_calib(void)
 {
 // en theorie il faut un delai de 2 ADC clock periods avant et apres la calib
-// Certaines comments disent que l'ADC doit etre disabled avant de calibrer, d'autres disent le contraire !
-  #ifdef PROF_PB12
-  PB12_PROFIL_1();
-  #endif
-// tempo 10 us @ 72 MHz
-tickdelay( 72 * 10 );
-  #ifdef PROF_PB12
-  PB12_PROFIL_0();
-  #endif
+// Observation : la boucle d'attente "CalibrationOnGoing" plante pour diverses raisons
+// ancienne explication, doutable :
+// 	"plante si cette fonction est appelee depuis une interrupt t.q. UART"
+// mais pas seulement, alors nouvelle approche :
+// 	Certains comments disent que l'ADC doit etre disabled avant de calibrer
+//	-> on disable, la boucle plante dans tous les cas
+//	d'autres disent le contraire !
+//	-> on disable puis re-enable : seems Ok
+tickdelay( 72 * 10 ); // tempo 10 us @ 72 MHz
+// "vidage" buffer
+LL_ADC_REG_ReadConversionData12( ADC1 );
+LL_ADC_REG_ReadConversionData12( ADC2 );
+tickdelay( 72 * 10 ); // tempo 10 us @ 72 MHz
+// disable
+LL_ADC_Disable( ADC1 );
+LL_ADC_Disable( ADC2 );
+tickdelay( 72 * 10 ); // tempo 10 us @ 72 MHz
+// enable
+LL_ADC_Enable( ADC1 );
+LL_ADC_Enable( ADC2 );
+tickdelay( 72 * 10 ); // tempo 10 us @ 72 MHz
 // la calibration
 LL_ADC_StartCalibration(ADC1);
 LL_ADC_StartCalibration(ADC2);
-// la boucle d'attente plante si cette fonction est appelee depuis une interrupt t.q. UART
-while	( ( LL_ADC_IsCalibrationOnGoing(ADC1) != 0 ) || ( LL_ADC_IsCalibrationOnGoing(ADC1) != 0 ) )
+// la boucle d'attente
+while	( ( LL_ADC_IsCalibrationOnGoing(ADC1) != 0 ) || ( LL_ADC_IsCalibrationOnGoing(ADC2) != 0 ) )
 	{ }
-  #ifdef PROF_PB12
-  PB12_PROFIL_1();
-  #endif
 // tempo min 2 cycles
 tickdelay( 8 * 3 );	// 3 cycles ADC ne durent pas plus que 8 Tck puisque le diviseur max est 8
-  #ifdef PROF_PB12
-  PB12_PROFIL_0();
-  #endif
 }
 
 // reset calibration on 2 ADCs N.B. ceci est pour tests seulrment, n'est pas supporte par LL !
