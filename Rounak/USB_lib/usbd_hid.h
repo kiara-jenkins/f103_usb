@@ -42,14 +42,17 @@ extern "C" {
   * @{
   */
 #define HID_EPIN_ADDR                 0x81U
-#define HID_EPIN_SIZE                 0x40U	// attention a maintenir coherence avec descripteur de l'EP IN 01 ou aka 0x81
+#define HID_EPIN_SIZE                 0x40U	// attention a maintenir coherence avec descripteur de l'EP IN 01 aka 0x81
+
+#define HID_EPOUT_ADDR                0x02U
+#define HID_EPOUT_SIZE                0x40U	// attention a maintenir coherence avec descripteur de l'EP OUT 02
 
 #define USB_HID_CONFIG_DESC_SIZ       34U
 #define USB_HID_DESC_SIZ              9U
-#define HID_MOUSE_REPORT_DESC_SIZE    74U
+// #define HID_MOUSE_REPORT_DESC_SIZE    74U
 
-#define HID_DESCRIPTOR_TYPE           0x21U
-#define HID_REPORT_DESC               0x22U
+// #define HID_DESCRIPTOR_TYPE           0x21U
+// #define HID_REPORT_DESC               0x22U
 
 #ifndef HID_HS_BINTERVAL
 #define HID_HS_BINTERVAL            0x07U
@@ -122,7 +125,7 @@ uint8_t USBD_HID_SendReport(USBD_HandleTypeDef *pdev,
                             uint8_t *report,
                             uint16_t len);
 
-uint32_t USBD_HID_GetPollingInterval(USBD_HandleTypeDef *pdev);
+// uint32_t USBD_HID_GetPollingInterval(USBD_HandleTypeDef *pdev);
 
 /**
   * @}

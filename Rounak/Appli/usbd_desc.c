@@ -66,7 +66,7 @@
 #define USBD_VID     1155
 #define USBD_LANGID_STRING     1033
 #define USBD_MANUFACTURER_STRING     "Brisky"
-#define USBD_PID_FS     22315
+#define USBD_PID_FS     1527
 #define USBD_PRODUCT_STRING_FS     "Zic Sensor"
 #define USBD_CONFIGURATION_STRING_FS     "Config"
 #define USBD_INTERFACE_STRING_FS     "MIDI Interface"
@@ -100,10 +100,10 @@
   * @brief Private functions declaration.
   * @{
   */
-  
+#ifdef KK
 static void Get_SerialNum(void);
 static void IntToUnicode(uint32_t value, uint8_t * pbuf, uint8_t len);
-  
+#endif
 /**
   * @}
   */  
@@ -150,8 +150,8 @@ __ALIGN_BEGIN uint8_t USBD_FS_DeviceDesc[USB_LEN_DEV_DESC] __ALIGN_END =
 {
   0x12,                       /*bLength */
   USB_DESC_TYPE_DEVICE,       /*bDescriptorType*/
-  0x00,                       /*bcdUSB */
-  0x02,
+  0x10,                       /*bcdUSB */
+  0x01,
   0x00,                       /*bDeviceClass*/
   0x00,                       /*bDeviceSubClass*/
   0x00,                       /*bDeviceProtocol*/
@@ -281,9 +281,12 @@ uint8_t * USBD_FS_ManufacturerStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *l
   */
 uint8_t * USBD_FS_SerialStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length)
 {
-  UNUSED(speed);
-  *length = USB_SIZ_STRING_SERIAL;
 
+  UNUSED(speed);
+  USBD_GetString((uint8_t *)"Tchaopin1", USBD_StrDesc, length);
+  return USBD_StrDesc;
+#ifdef KK
+  *length = USB_SIZ_STRING_SERIAL;
   /* Update the serial number string descriptor with the data from the unique
    * ID */
   Get_SerialNum();
@@ -291,6 +294,7 @@ uint8_t * USBD_FS_SerialStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length)
   
   /* USER CODE END USBD_FS_SerialStrDescriptor */
   return (uint8_t *) USBD_StringSerial;
+  #endif
 }
 
 /**
@@ -331,6 +335,7 @@ uint8_t * USBD_FS_InterfaceStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *leng
   return USBD_StrDesc;
 }
 
+#ifdef KK
 /**
   * @brief  Create the serial number string descriptor 
   * @param  None 
@@ -380,6 +385,7 @@ static void IntToUnicode(uint32_t value, uint8_t * pbuf, uint8_t len)
     pbuf[2 * idx + 1] = 0;
   }
 }
+#endif
 /**
   * @}
   */

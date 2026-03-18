@@ -161,7 +161,7 @@ __ALIGN_BEGIN static uint8_t USBD_HID_CfgFSDesc[]  __ALIGN_END =
 		  /* Reference: https://www.usb.org/sites/default/files/midi10.pdf Page: 42 */
 		  0x09,		// Length of the Descriptor (1Byte)
 		  0x05,		// Descriptor Type: Endpoint (1Byte)
-		  0x01,		// Endpoint Address: OUT Endpoint 1 (1Byte)
+		  0x02,		// Endpoint Address: OUT Endpoint 1 (1Byte)
 		  0x02,		// Attributes: Bulk, Not shared (1Byte)
 		  0x40,		// Max Packet Size: 64 Bytes (2Bytes low-byte first)
 		  0x00,		// Max Packet Size: high-byte, continuing from above
@@ -201,6 +201,7 @@ __ALIGN_BEGIN static uint8_t USBD_HID_CfgFSDesc[]  __ALIGN_END =
 		  0x03		// ID of Embedded MIDI OUT Jack: 3 (1Byte)
 };
 
+#ifdef KK
 /* USB HID device Configuration Descriptor */
 __ALIGN_BEGIN static uint8_t USBD_HID_Desc[USB_HID_DESC_SIZ]  __ALIGN_END  =
 {
@@ -215,6 +216,7 @@ __ALIGN_BEGIN static uint8_t USBD_HID_Desc[USB_HID_DESC_SIZ]  __ALIGN_END  =
   HID_MOUSE_REPORT_DESC_SIZE,/*wItemLength: Total length of Report descriptor*/
   0x00,
 };
+#endif
 
 /* USB Standard Device Descriptor */
 __ALIGN_BEGIN static uint8_t USBD_HID_DeviceQualifierDesc[USB_LEN_DEV_QUALIFIER_DESC]  __ALIGN_END =
@@ -231,6 +233,7 @@ __ALIGN_BEGIN static uint8_t USBD_HID_DeviceQualifierDesc[USB_LEN_DEV_QUALIFIER_
   0x00,
 };
 
+#ifdef KK
 __ALIGN_BEGIN static uint8_t HID_MOUSE_ReportDesc[HID_MOUSE_REPORT_DESC_SIZE]  __ALIGN_END =
 {
   0x05,   0x01,
@@ -280,6 +283,7 @@ __ALIGN_BEGIN static uint8_t HID_MOUSE_ReportDesc[HID_MOUSE_REPORT_DESC_SIZE]  _
 
   0x01,   0xc0
 };
+#endif
 
 /**
   * @}
@@ -397,6 +401,7 @@ static uint8_t  USBD_HID_Setup(USBD_HandleTypeDef *pdev,
           break;
 
         case USB_REQ_GET_DESCRIPTOR:
+          /*
           if (req->wValue >> 8 == HID_REPORT_DESC)
           {
             len = MIN(HID_MOUSE_REPORT_DESC_SIZE, req->wLength);
@@ -407,7 +412,7 @@ static uint8_t  USBD_HID_Setup(USBD_HandleTypeDef *pdev,
             pbuf = USBD_HID_Desc;
             len = MIN(USB_HID_DESC_SIZ, req->wLength);
           }
-          else
+          else */
           {
             USBD_CtlError(pdev, req);
             ret = USBD_FAIL;
