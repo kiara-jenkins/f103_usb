@@ -92,6 +92,22 @@ HAL_PCD_IRQHandler(&hpcd_USB_FS);
 }
 #endif
 
+#ifdef MIDI_USB
+void USB_dump_PMA(void)
+{
+CDC_printf("USB_TABLE = %u\n", (unsigned int)USB->BTABLE );
+uint32_t a = USB_PMAADDR;
+// i = index de 16-bit word dans la PMA
+// i*2 = offset local dans la PMA (en bytes)
+// a = adresse dans le MCU bus = i * 4 car chaque 16-bit word de PMA occupe 32 bits
+for	( unsigned int i = 0; i < 260; i++ )
+	{
+	uint32_t v = ((uint32_t *)a)[i];
+	CDC_printf("@ 0x%02x : 0x%04x\n", i*2, v );
+	}
+}
+#endif
+
 #ifdef USE_CDC
 void cmd_handler( int c )
 {
@@ -160,6 +176,9 @@ switch	( c )
 			hUsbDeviceFS.ep_out[1].status,
 			((USBD_HID_HandleTypeDef *) hUsbDeviceFS.pClassData)->state
 			);
+		break;
+	case 'P' :
+		USB_dump_PMA();
 		break;
 	#endif
 
@@ -314,6 +333,12 @@ while (1)
 		USBD_HID_SendReport(&hUsbDeviceFS, midiAllOff, 4);
 		cntblinks = 5;
 		}
+	USBD_HID_HandleTypeDef *hhid = (USBD_HID_HandleTypeDef *)hUsbDeviceFS.pClassData;
+	if	( hhid->RXflag )
+		{
+		hhid->RXflag = 0;
+		CDC_printf("RXed\n");
+		}
 	#endif
 
 	#ifdef USE_ADC_4CH
@@ -334,7 +359,8 @@ while (1)
  	if	(  ( old1Hz != cnt1Hz ) )
  		{
  		old1Hz = cnt1Hz;
- 		CDC_printf( "%u s DWT test %u\n", cnt1Hz, DWT->CYCCNT / SystemCoreClock );
+ 		if	( DWT->CYCCNT )
+	 		CDC_printf( "%u s DWT test %u\n", cnt1Hz, DWT->CYCCNT / SystemCoreClock );
 
 	#ifdef ENCODER_TIM
 		short int e = encoder_get(TIM1);

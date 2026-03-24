@@ -19,6 +19,9 @@ static uint8_t  *USBD_HID_GetFSCfgDesc(uint16_t *length);
 static uint8_t  *USBD_HID_GetDeviceQualifierDesc(uint16_t *length);
 
 static uint8_t  USBD_HID_DataIn(USBD_HandleTypeDef *pdev, uint8_t epnum);
+
+static uint8_t  USBD_HID_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum);
+
 /**
   * @}
   */
@@ -35,7 +38,7 @@ USBD_ClassTypeDef  USBD_HID =
   NULL, /*EP0_TxSent*/
   NULL, /*EP0_RxReady*/
   USBD_HID_DataIn, /*DataIn*/
-  NULL, /*DataOut*/
+  USBD_HID_DataOut, /*DataOut*/
   NULL, /*SOF */
   NULL,
   NULL,
@@ -303,8 +306,12 @@ __ALIGN_BEGIN static uint8_t HID_MOUSE_ReportDesc[HID_MOUSE_REPORT_DESC_SIZE]  _
 static uint8_t  USBD_HID_Init(USBD_HandleTypeDef *pdev, uint8_t cfgidx)
 {
   /* Open EP IN */
-  USBD_LL_OpenEP(pdev, HID_EPIN_ADDR, USBD_EP_TYPE_INTR, HID_EPIN_SIZE);
+  USBD_LL_OpenEP(pdev, HID_EPIN_ADDR, USBD_EP_TYPE_BULK, HID_EPIN_SIZE);
   pdev->ep_in[HID_EPIN_ADDR & 0xFU].is_used = 1U;
+
+  // JLN parametrize EP OUT
+  USBD_LL_OpenEP(pdev, HID_EPOUT_ADDR, USBD_EP_TYPE_BULK, HID_EPOUT_SIZE);
+  pdev->ep_out[HID_EPOUT_ADDR].is_used = 1U;
 
   pdev->pClassData = USBD_malloc(sizeof(USBD_HID_HandleTypeDef));
 
@@ -314,6 +321,9 @@ static uint8_t  USBD_HID_Init(USBD_HandleTypeDef *pdev, uint8_t cfgidx)
   }
 
   ((USBD_HID_HandleTypeDef *)pdev->pClassData)->state = HID_IDLE;
+
+  // JLN Prepare Out endpoint to receive 1st packet */
+  USBD_LL_PrepareReceive( pdev, HID_EPOUT_ADDR, ((USBD_HID_HandleTypeDef *)pdev->pClassData)->RXbuf, HID_EPOUT_SIZE );
 
   return USBD_OK;
 }
@@ -543,6 +553,26 @@ static uint8_t  USBD_HID_DataIn(USBD_HandleTypeDef *pdev,
   /* Ensure that the FIFO is empty before a new transfer, this condition could
   be caused by  a new transfer before the end of the previous transfer */
   ((USBD_HID_HandleTypeDef *)pdev->pClassData)->state = HID_IDLE;
+  return USBD_OK;
+}
+
+/** JLN !
+  * @brief  USBD_HID_DataOut
+  *         handle data OUT Stage
+  * @param  pdev: device instance
+  * @param  epnum: endpoint index
+  * @retval status
+  */
+static uint8_t  USBD_HID_DataOut(USBD_HandleTypeDef *pdev,
+                                        uint8_t epnum)
+{
+
+  USBD_HID_HandleTypeDef     *hhid = (USBD_HID_HandleTypeDef *)pdev->pClassData;
+
+  hhid->RXflag += 1;	// maniere d'alerter l'appli...
+
+  USBD_LL_PrepareReceive( pdev, HID_EPOUT_ADDR, hhid->RXbuf, HID_EPOUT_SIZE);
+
   return USBD_OK;
 }
 

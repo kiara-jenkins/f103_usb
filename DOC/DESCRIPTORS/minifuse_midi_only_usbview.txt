@@ -1,0 +1,57 @@
+Interface Descriptor:
+bInterfaceNumber:     0x04
+bAlternateSetting:    0x00
+bNumEndpoints:        0x02
+bInterfaceClass:      0x01 (Audio)
+bInterfaceSubClass:   0x03 (MIDI Streaming)
+bInterfaceProtocol:   0x00
+iInterface:           0x00
+
+Unknown Descriptor:
+bDescriptorType:      0x24
+bLength:              0x07
+07 24 01 00 01 41 00 
+
+Unknown Descriptor:
+bDescriptorType:      0x24
+bLength:              0x06
+06 24 02 01 01 00 
+
+Unknown Descriptor:
+bDescriptorType:      0x24
+bLength:              0x06
+06 24 02 02 02 0C 
+
+Unknown Descriptor:
+bDescriptorType:      0x24
+bLength:              0x09
+09 24 03 01 03 01 02 01 00 
+
+Unknown Descriptor:
+bDescriptorType:      0x24
+bLength:              0x09
+09 24 03 02 04 01 01 01 0B 
+
+Endpoint Descriptor:
+bEndpointAddress:     0x02
+Transfer Type:        Bulk
+wMaxPacketSize:     0x0200 (512)
+wInterval:          0x0000
+bSyncAddress:         0x00
+
+Unknown Descriptor:
+bDescriptorType:      0x25
+bLength:              0x05
+05 25 01 01 01 
+
+Endpoint Descriptor:
+bEndpointAddress:     0x83
+Transfer Type:        Bulk
+wMaxPacketSize:     0x0200 (512)
+wInterval:          0x0000
+bSyncAddress:         0x00
+
+Unknown Descriptor:
+bDescriptorType:      0x25
+bLength:              0x05
+05 25 01 01 03 

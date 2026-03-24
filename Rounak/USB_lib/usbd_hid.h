@@ -92,6 +92,8 @@ typedef struct
   uint32_t             IdleState;
   uint32_t             AltSetting;
   HID_StateTypeDef     state;
+  uint32_t	       RXflag;
+  uint8_t	       RXbuf[HID_EPOUT_SIZE];	// JLN
 }
 USBD_HID_HandleTypeDef;
 /**
