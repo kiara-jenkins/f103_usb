@@ -38,7 +38,7 @@ uint8_t midiNoteOff[4] = { 0x08, 0x83, 65, 0  };
 uint8_t midiNoteOffOn[8]  = { 0x08, 0x83, 65, 0, 0x09, 0x93, 65, 99 };
 
 // B0 7B 00 (123) = all notes off
-uint8_t midiAllOff[4]= { 0x0b, 0xb0, 0x7b, 0 };
+uint8_t midiAllOff[4]= { 0x0b, 0xb3, 0x7b, 0 };
 
 // // interrupt routines
 #ifdef __cplusplus
@@ -127,6 +127,7 @@ switch	( c )
 		break;
 	case '&' :
 		CDC_printf( "HCLK %u, DWT %u\n", SystemCoreClock, DWT->CYCCNT );
+		DWT->CTRL &= ~DWT_CTRL_CYCCNTENA_Msk;
 		DWT->CYCCNT = 0;
 		break;
 	case '$' :
@@ -179,6 +180,10 @@ switch	( c )
 		break;
 	case 'P' :
 		USB_dump_PMA();
+		break;
+	case '/' :
+		while( ((USBD_HID_HandleTypeDef *) hUsbDeviceFS.pClassData)->state == HID_BUSY ) { CDC_printf("/"); }
+		USBD_HID_SendReport(&hUsbDeviceFS, midiAllOff, 4);
 		break;
 	#endif
 
@@ -327,17 +332,21 @@ while (1)
 	if	( ( c = CDC_getcmd() ) > 0 )
 		cmd_handler( c );
 	#ifdef MIDI_USB
-	if	( ( BLUE_PRESS() ) && ( cntblinks < 5 ) )
-		{
-		while( ((USBD_HID_HandleTypeDef *) hUsbDeviceFS.pClassData)->state == HID_BUSY ) { CDC_printf("/"); }
-		USBD_HID_SendReport(&hUsbDeviceFS, midiAllOff, 4);
-		cntblinks = 5;
-		}
 	USBD_HID_HandleTypeDef *hhid = (USBD_HID_HandleTypeDef *)hUsbDeviceFS.pClassData;
 	if	( hhid->RXflag )
 		{
 		hhid->RXflag = 0;
-		CDC_printf("RXed\n");
+		if	( cntblinks == 2 )	// echo !
+			{
+			while( ((USBD_HID_HandleTypeDef *) hUsbDeviceFS.pClassData)->state == HID_BUSY ) { CDC_printf("."); }
+			USBD_HID_SendReport(&hUsbDeviceFS, hhid->RXbuf, 4);
+			}
+		PCD_HandleTypeDef * hpcd = (PCD_HandleTypeDef *)hUsbDeviceFS.pData;
+		USB_EPTypeDef * epRX = &hpcd->OUT_ep[HID_EPOUT_ADDR];
+		USBD_EndpointTypeDef * eprx = &hUsbDeviceFS.ep_out[HID_EPOUT_ADDR];
+		CDC_printf("MIDI RX totlen=%u, remlen=%u, len=%u, cnt=%u, %02x %02x %02x\n",
+			    eprx->total_length, eprx->rem_length, epRX->xfer_len, epRX->xfer_count, epRX->xfer_buff[1], epRX->xfer_buff[2], epRX->xfer_buff[3] );
+		// CDC_printf("RXed %02x %02x %02x\n", hhid->RXbuf[1], hhid->RXbuf[2], hhid->RXbuf[3] );
 		}
 	#endif
 
@@ -372,7 +381,7 @@ while (1)
 	#endif
 
 	#ifdef MIDI_USB
-		if	( hUsbDeviceFS.dev_state == 3 )
+		if	( ( hUsbDeviceFS.dev_state == 3 ) && ( BLUE_PRESS() ) )
 			{
 		#ifdef DOUBLE_EVENT
 			while( ((USBD_HID_HandleTypeDef *) hUsbDeviceFS.pClassData)->state == HID_BUSY ) { /* CDC_printf(".");*/ }
@@ -389,8 +398,6 @@ while (1)
 			USBD_HID_SendReport(&hUsbDeviceFS, midiNoteOn, 4);
 		#endif
 			}
-		if	( cntblinks == 5 )
-			cntblinks = 1;		// re-armer BLUE_PRESS
 	#endif
 		}
 	}
