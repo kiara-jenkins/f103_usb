@@ -6,10 +6,6 @@
 #include "stm32f1xx_ll_gpio.h"
 #include "stm32f1xx_ll_usart.h"
 #include "stm32f1xx_hal_pcd.h"
-#include "usbd_core.h"
-#include "usbd_desc.h"
-#include "usbd_cla.h"
-
 #include "options.h"
 #include "sys.h"
 #include "gpio.h"
@@ -20,13 +16,21 @@
 #include "CDC.h"
 #include "mpu9250_constants.h"
 
-// // static data
+#ifdef MIDI_USB
+#include "usbd_core.h"
+#include "usbd_desc.h"
+#include "usbd_cla.h"
+// // USB static data
 USBD_HandleTypeDef USBD_Device;
 extern PCD_HandleTypeDef hpcd;
+#endif
 
+// // systick static data
 volatile unsigned int cnt100Hz = 0;
 volatile unsigned int cnt1Hz = 0;
 volatile unsigned int cntblinks = 1;
+
+// MIDI static data
 
 // MIDI Message arrays: 4 Bytes
 // 1st byte : MSBs --> Cable Number 0, LSBs --> duplicate MSBs of MIDI opcode (!??!)
@@ -81,12 +85,24 @@ if	( ( cnt100Hz % 100 ) == 0 )
 
 
 #ifdef MIDI_USB
+
+volatile int usb_intcnt = 0;
 // USB interrupt routine
 void USB_LP_CAN1_RX0_IRQHandler(void)
 {
+usb_intcnt +=1;
 HAL_PCD_IRQHandler(&hpcd);
 }
 #endif
+
+void HardFault_Handler(void)
+{ while(1) {} }
+void MemManage_Handler(void)
+{ while(1) {} }
+void BusFault_Handler(void)
+{ while(1) {} }
+void UsageFault_Handler(void)
+{ while(1) {} }
 
 #ifdef __cplusplus
 }
@@ -103,7 +119,7 @@ uint32_t a = USB_PMAADDR;
 for	( unsigned int i = 0; i < 260; i++ )
 	{
 	uint32_t v = ((uint32_t *)a)[i];
-	CDC_printf("@ 0x%02x : 0x%04x\n", i*2, v );
+	CDC_printf("@ %08x # 0x%02x : 0x%04x\n", a+i*4, i*2, v );
 	}
 }
 #endif
@@ -170,19 +186,19 @@ switch	( c )
 		#define USBD_STATE_SUSPENDED                            0x04U
 		c'est USBD_Device.dev_state !! eureka !!
 		*/
-		CDC_printf("status %u %u %u %u\n",
+		CDC_printf("status %u %u %u %u usb_intcnt = %d\n",
 			USBD_Device.dev_config_status,
 			USBD_Device.dev_state,
 			USBD_Device.dev_connection_status,
-			USBD_Device.ep_out[1].status
+			USBD_Device.ep_out[1].status,
+			usb_intcnt
 			);
 		break;
 	case 'P' :
 		USB_dump_PMA();
 		break;
 	case '/' :
-		//while( ((USBD_HID_HandleTypeDef *) USBD_Device.pClassData)->state == HID_BUSY ) { CDC_printf("/"); }
-		//USBD_HID_SendReport(&USBD_Device, midiAllOff, 4);
+		while ( USBD_CDC_SendPacket( &USBD_Device, midiAllOff, 4 ) == 1 ) { CDC_printf("/"); }
 		break;
 	#endif
 
@@ -306,11 +322,11 @@ gpio_sw_i2c_init();
 #endif
 
 #ifdef MIDI_USB
-if	(USBD_Init(&USBD_Device, &FS_Desc, 0) != USBD_OK)
+if	(USBD_Init( &USBD_Device, &FS_Desc, 0 ) != USBD_OK)
 	 while(1) {};
-if	(USBD_RegisterClass(&USBD_Device, &USBD_CDC) != USBD_OK)
+if	(USBD_RegisterClass( &USBD_Device, &USBD_CDC ) != USBD_OK)
 	while(1) {};
-if	(USBD_Start(&USBD_Device) != USBD_OK)
+if	(USBD_Start( &USBD_Device ) != USBD_OK)
 	while(1) {};
 sys_delay(100);
 cmd_handler( 's' );
@@ -330,22 +346,19 @@ while (1)
 	// actions immediates
 	if	( ( c = CDC_getcmd() ) > 0 )
 		cmd_handler( c );
-	#ifdef MIDI_USB_NOT_NOW
-	USBD_HID_HandleTypeDef *hhid = (USBD_HID_HandleTypeDef *)USBD_Device.pClassData;
-	if	( hhid->RXflag )
+	#ifdef MIDI_USB
+	if	( USBD_Device.dev_state == 3 )
 		{
-		hhid->RXflag = 0;
-		if	( cntblinks == 2 )	// echo !
+		USBD_CDC_HandleTypeDef *hcla = (USBD_CDC_HandleTypeDef *)USBD_Device.pClassData;
+		if	( hcla->RxCnt )
 			{
-			while( ((USBD_HID_HandleTypeDef *) USBD_Device.pClassData)->state == HID_BUSY ) { CDC_printf("."); }
-			USBD_HID_SendReport(&USBD_Device, hhid->RXbuf, 4);
+			hcla->RxCnt = 0;
+			if	( cntblinks == 2 )	// echo !
+				{
+				while ( USBD_CDC_SendPacket( &USBD_Device, hcla->RxBuffer, 4 ) == 1 ) { CDC_printf("."); }
+				}
+			CDC_printf("MIDI RX len=%u : %02x %02x %02x\n", hcla->RxLength,  hcla->RxBuffer[1], hcla->RxBuffer[2], hcla->RxBuffer[3] );
 			}
-		PCD_HandleTypeDef * hpcd = (PCD_HandleTypeDef *)USBD_Device.pData;
-		USB_EPTypeDef * epRX = &hpcd->OUT_ep[HID_EPOUT_ADDR];
-		USBD_EndpointTypeDef * eprx = &USBD_Device.ep_out[HID_EPOUT_ADDR];
-		CDC_printf("MIDI RX totlen=%u, remlen=%u, len=%u, cnt=%u, %02x %02x %02x\n",
-			    eprx->total_length, eprx->rem_length, epRX->xfer_len, epRX->xfer_count, epRX->xfer_buff[1], epRX->xfer_buff[2], epRX->xfer_buff[3] );
-		// CDC_printf("RXed %02x %02x %02x\n", hhid->RXbuf[1], hhid->RXbuf[2], hhid->RXbuf[3] );
 		}
 	#endif
 
@@ -379,23 +392,24 @@ while (1)
 		midiNoteOn[2] = midiNoteOffOn[6] = 65 + ( (e+100000000) % 13 );		// encoder -> gamme chromatique sur 1 octave a partir de Fa
 	#endif
 
-	#ifdef MIDI_USB_NOT_NOW
+	#ifdef MIDI_USB
 		if	( ( USBD_Device.dev_state == 3 ) && ( BLUE_PRESS() ) )
 			{
-		#ifdef DOUBLE_EVENT
-			while( ((USBD_HID_HandleTypeDef *) USBD_Device.pClassData)->state == HID_BUSY ) { /* CDC_printf(".");*/ }
-			USBD_HID_SendReport(&USBD_Device, midiNoteOffOn, 8);	// note off etait prepare lors du note on precedent ;-)
-			midiNoteOffOn[2] = midiNoteOffOn[6];				// pret pour le prochain tour
-		#else
-			unsigned int finedelay = ( 2 * 72000 ) / 3;	// 72000 = 1ms (ne pas depasser 4ms)
-			// Make sure the USB functions are not BUSY before sending the MIDI Message
-			while( ((USBD_HID_HandleTypeDef *) USBD_Device.pClassData)->state == HID_BUSY ) { CDC_printf("."); }
-			USBD_HID_SendReport(&USBD_Device, midiNoteOff, 4);	// note off etait prepare lors du note on precedent ;-)
-			midiNoteOff[2] = midiNoteOn[2];				// pret pour le prochain tour
-			tickdelay( finedelay );
-			while( ((USBD_HID_HandleTypeDef *) USBD_Device.pClassData)->state == HID_BUSY ) { CDC_printf(":"); }
-			USBD_HID_SendReport(&USBD_Device, midiNoteOn, 4);
-		#endif
+			if	( cntblinks == 4 )
+				{
+				// note off etait prepare lors du note on precedent ;-)
+				while ( USBD_CDC_SendPacket( &USBD_Device, midiNoteOffOn, 8 ) == 1 ) { CDC_printf(":"); }
+				midiNoteOffOn[2] = midiNoteOffOn[6];				// pret pour le prochain tour
+				CDC_printf("sent 8 bytes !\n");
+				}
+			else	{
+				unsigned int finedelay = ( 2 * 72000 ) / 3;	// 72000 = 1ms (ne pas depasser 4ms)
+				// note off etait prepare lors du note on precedent ;-)
+				while ( USBD_CDC_SendPacket( &USBD_Device, midiNoteOff, 4 ) == 1 ) { CDC_printf(","); }
+				midiNoteOff[2] = midiNoteOn[2];				// pret pour le prochain tour
+				tickdelay( finedelay );
+				while ( USBD_CDC_SendPacket( &USBD_Device, midiNoteOn, 4 ) == 1 ) { CDC_printf(";"); }
+				}
 			}
 	#endif
 		}

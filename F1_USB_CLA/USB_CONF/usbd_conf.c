@@ -1,42 +1,13 @@
-/**
-  ******************************************************************************
-  * @file    USB_Device/CDC_Standalone/Src/usbd_conf.c
-  * @author  MCD Application Team
-  * @brief   This file implements the USB Device library callbacks and MSP
-  ******************************************************************************
-  * @attention
-  *
-  * <h2><center>&copy; Copyright (c) 2015 STMicroelectronics.
-  * All rights reserved.</center></h2>
-  *
-  * This software component is licensed by ST under Ultimate Liberty license
-  * SLA0044, the "License"; You may not use this file except in compliance with
-  * the License. You may obtain a copy of the License at:
-  *                      www.st.com/SLA0044
-  *
-  ******************************************************************************
-  */
 
 /* Includes ------------------------------------------------------------------ */
 #include "stm32f1xx.h"
-// #include "stm32f1xx_hal.h"
 #include "usbd_def.h"
 #include "usbd_core.h"
 #include "usbd_cla.h"
 
-/* Private typedef ----------------------------------------------------------- */
-/* Private define ------------------------------------------------------------ */
 
-/* Private macro ------------------------------------------------------------- */
-/* Private variables --------------------------------------------------------- */
 PCD_HandleTypeDef hpcd;
 
-/* Private function prototypes ----------------------------------------------- */
-/* Private functions --------------------------------------------------------- */
-
-/*******************************************************************************
-                       PCD BSP Routines
-*******************************************************************************/
 
 /**
   * @brief  Initializes the PCD MSP.
@@ -215,8 +186,8 @@ USBD_StatusTypeDef USBD_LL_Init(USBD_HandleTypeDef * pdev)
   HAL_PCDEx_PMAConfig(pdev->pData, 0x00, PCD_SNG_BUF, 0x40);
   HAL_PCDEx_PMAConfig(pdev->pData, 0x80, PCD_SNG_BUF, 0x80);
   HAL_PCDEx_PMAConfig(pdev->pData, CDC_IN_EP, PCD_SNG_BUF, 0xC0);
-  HAL_PCDEx_PMAConfig(pdev->pData, CDC_OUT_EP, PCD_SNG_BUF, 0x110);
-  HAL_PCDEx_PMAConfig(pdev->pData, CDC_CMD_EP, PCD_SNG_BUF, 0x100);
+  HAL_PCDEx_PMAConfig(pdev->pData, CDC_OUT_EP, PCD_SNG_BUF, 0x100);
+
 
   return USBD_OK;
 }
