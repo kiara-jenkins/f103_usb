@@ -3,46 +3,49 @@
 #include "usbd_cla.h"
 #include "usbd_ctlreq.h"
 
+USBD_CLA_HandleTypeDef hcla;
 
-static uint8_t  USBD_CDC_Init(USBD_HandleTypeDef *pdev, uint8_t cfgidx);
+static uint8_t  USBD_CLA_Init(USBD_HandleTypeDef *pdev, uint8_t cfgidx);
 
-static uint8_t  USBD_CDC_DeInit(USBD_HandleTypeDef *pdev, uint8_t cfgidx);
+static uint8_t  USBD_CLA_DeInit(USBD_HandleTypeDef *pdev, uint8_t cfgidx);
 
-static uint8_t  USBD_CDC_Setup(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req);
+static uint8_t  USBD_CLA_Setup(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req);
 
-static uint8_t  USBD_CDC_DataIn(USBD_HandleTypeDef *pdev, uint8_t epnum);
+static uint8_t  USBD_CLA_DataIn(USBD_HandleTypeDef *pdev, uint8_t epnum);
 
-static uint8_t  USBD_CDC_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum);
+static uint8_t  USBD_CLA_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum);
 
-static uint8_t  *USBD_CDC_GetFSCfgDesc(uint16_t *length);
+static uint8_t  *USBD_CLA_GetFSCfgDesc(uint16_t *length);
 
-static uint8_t  *USBD_CDC_GetHSCfgDesc(uint16_t *length);
+static uint8_t  *USBD_CLA_GetHSCfgDesc(uint16_t *length);
 
-uint8_t  *USBD_CDC_GetDeviceQualifierDescriptor(uint16_t *length);
+uint8_t  *USBD_CLA_GetDeviceQualifierDescriptor(uint16_t *length);
 
 
-/* CDC interface class callbacks structure */
-USBD_ClassTypeDef  USBD_CDC =
+/* CLA class callbacks structure (for pClass) */
+USBD_ClassTypeDef  USBD_CLA =
 {
-  USBD_CDC_Init,
-  USBD_CDC_DeInit,
-  USBD_CDC_Setup,
+  USBD_CLA_Init,
+  USBD_CLA_DeInit,
+  USBD_CLA_Setup,
   NULL,                 /* EP0_TxSent, */
-  NULL,		// USBD_CDC_EP0_RxReady,
-  USBD_CDC_DataIn,
-  USBD_CDC_DataOut,
+  NULL,		// USBD_CLA_EP0_RxReady,
+  USBD_CLA_DataIn,
+  USBD_CLA_DataOut,
   NULL,
   NULL,
   NULL,
-  USBD_CDC_GetHSCfgDesc,
-  USBD_CDC_GetFSCfgDesc,
-  NULL,		// USBD_CDC_GetOtherSpeedCfgDesc,
-  USBD_CDC_GetDeviceQualifierDescriptor,
+  USBD_CLA_GetHSCfgDesc,
+  USBD_CLA_GetFSCfgDesc,
+  NULL,		// USBD_CLA_GetOtherSpeedCfgDesc,
+  USBD_CLA_GetDeviceQualifierDescriptor,
 };
+// CLA class data (for pClassData)
+USBD_CLA_HandleTypeDef USBD_CLA_DATA;
 
 
-/* USB CDC device Configuration Descriptor */
-__ALIGN_BEGIN static uint8_t USBD_CDC_CfgFSDesc[]  __ALIGN_END =
+/* USB CLA device Configuration Descriptor */
+__ALIGN_BEGIN static uint8_t USBD_CLA_CfgFSDesc[]  __ALIGN_END =
 {
 /* MIDI Adapter Configuration Descriptor: 9Bytes */
 /* Reference: https://www.usb.org/sites/default/files/midi10.pdf Page: 37,38 */
@@ -186,7 +189,7 @@ __ALIGN_BEGIN static uint8_t USBD_CDC_CfgFSDesc[]  __ALIGN_END =
 };
 
 /* USB Standard Device Descriptor */
-__ALIGN_BEGIN static uint8_t USBD_CDC_DeviceQualifierDesc[USB_LEN_DEV_QUALIFIER_DESC] __ALIGN_END =
+__ALIGN_BEGIN static uint8_t USBD_CLA_DeviceQualifierDesc[USB_LEN_DEV_QUALIFIER_DESC] __ALIGN_END =
 {
   USB_LEN_DEV_QUALIFIER_DESC,
   USB_DESC_TYPE_DEVICE_QUALIFIER,
@@ -201,83 +204,83 @@ __ALIGN_BEGIN static uint8_t USBD_CDC_DeviceQualifierDesc[USB_LEN_DEV_QUALIFIER_
 };
 
 /**
-  * @brief  USBD_CDC_Init
-  *         Initialize the CDC interface
+  * @brief  USBD_CLA_Init
+  *         Initialize the CLA interface
   * @param  pdev: device instance
   * @param  cfgidx: Configuration index
   * @retval status
   */
-static uint8_t  USBD_CDC_Init(USBD_HandleTypeDef *pdev, uint8_t cfgidx)
+static uint8_t  USBD_CLA_Init(USBD_HandleTypeDef *pdev, uint8_t cfgidx)
 {
   uint8_t ret = 0U;
-  USBD_CDC_HandleTypeDef   *hcdc;
 
     /* Open EP IN */
-    USBD_LL_OpenEP(pdev, CDC_IN_EP, USBD_EP_TYPE_BULK, CDC_DATA_PACKET_SIZE);
-    pdev->ep_in[CDC_IN_EP & 0xFU].is_used = 1U;
+    USBD_LL_OpenEP(pdev, CLA_IN_EP, USBD_EP_TYPE_BULK, CLA_DATA_PACKET_SIZE);
+    pdev->ep_in[CLA_IN_EP & 0xFU].is_used = 1U;
 
     /* Open EP OUT */
-    USBD_LL_OpenEP(pdev, CDC_OUT_EP, USBD_EP_TYPE_BULK, CDC_DATA_PACKET_SIZE);
-    pdev->ep_out[CDC_OUT_EP & 0xFU].is_used = 1U;
+    USBD_LL_OpenEP(pdev, CLA_OUT_EP, USBD_EP_TYPE_BULK, CLA_DATA_PACKET_SIZE);
+    pdev->ep_out[CLA_OUT_EP & 0xFU].is_used = 1U;
 
-  pdev->pClassData = USBD_malloc(sizeof(USBD_CDC_HandleTypeDef));
+  // pdev->pClassData = USBD_malloc(sizeof(USBD_CLA_HandleTypeDef));
+  pdev->pClassData = &USBD_CLA_DATA;	// is statically allocated
 
   if (pdev->pClassData == NULL)
   {
-    ret = 1U;
+    ret = 1U;	// unreachable code, LOL
   }
   else
   {
-    hcdc = (USBD_CDC_HandleTypeDef *) pdev->pClassData;
+    USBD_CLA_HandleTypeDef * hcla = (USBD_CLA_HandleTypeDef *) pdev->pClassData;
 
     /* Init Xfer states */
-    hcdc->RxBuffer = hcdc->defaultRxBuffer;
-    hcdc->TxState = 0U;
-    hcdc->RxState = 0U;
-    hcdc->RxCnt = 0;
+    hcla->RxBuffer = hcla->defaultRxBuffer;
+    hcla->TxState = 0U;
+    hcla->RxState = 0U;
+    hcla->RxCnt = 0;
 
     /* Prepare Out endpoint to receive next packet */
-    USBD_LL_PrepareReceive(pdev, CDC_OUT_EP, hcdc->RxBuffer, CDC_DATA_PACKET_SIZE);
+    USBD_LL_PrepareReceive(pdev, CLA_OUT_EP, hcla->RxBuffer, CLA_DATA_PACKET_SIZE);
   }
   return ret;
 }
 
 /**
-  * @brief  USBD_CDC_Init
-  *         DeInitialize the CDC layer
+  * @brief  USBD_CLA_Init
+  *         DeInitialize the CLA layer
   * @param  pdev: device instance
   * @param  cfgidx: Configuration index
   * @retval status
   */
-static uint8_t  USBD_CDC_DeInit(USBD_HandleTypeDef *pdev, uint8_t cfgidx)
+static uint8_t  USBD_CLA_DeInit(USBD_HandleTypeDef *pdev, uint8_t cfgidx)
 {
   uint8_t ret = 0U;
 
   /* Close EP IN */
-  USBD_LL_CloseEP(pdev, CDC_IN_EP);
-  pdev->ep_in[CDC_IN_EP & 0xFU].is_used = 0U;
+  USBD_LL_CloseEP(pdev, CLA_IN_EP);
+  pdev->ep_in[CLA_IN_EP & 0xFU].is_used = 0U;
 
   /* Close EP OUT */
-  USBD_LL_CloseEP(pdev, CDC_OUT_EP);
-  pdev->ep_out[CDC_OUT_EP & 0xFU].is_used = 0U;
+  USBD_LL_CloseEP(pdev, CLA_OUT_EP);
+  pdev->ep_out[CLA_OUT_EP & 0xFU].is_used = 0U;
 
-  USBD_free(pdev->pClassData);
-  pdev->pClassData = NULL;
+  // USBD_free(pdev->pClassData);  // is static now
+  // pdev->pClassData = NULL;
 
 return ret;
 }
 
 /**
-  * @brief  USBD_CDC_Setup
-  *         Handle the CDC specific requests
+  * @brief  USBD_CLA_Setup
+  *         Handle the CLA specific requests
   * @param  pdev: instance
   * @param  req: usb requests
   * @retval status
   */
-static uint8_t  USBD_CDC_Setup(USBD_HandleTypeDef *pdev,
+static uint8_t  USBD_CLA_Setup(USBD_HandleTypeDef *pdev,
                                USBD_SetupReqTypedef *req)
 {
-// USBD_CDC_HandleTypeDef   *hcdc = (USBD_CDC_HandleTypeDef *) pdev->pClassData;
+// USBD_CLA_HandleTypeDef   *hcla = (USBD_CLA_HandleTypeDef *) pdev->pClassData;
   uint8_t ifalt = 0U;
   uint16_t status_info = 0U;
   uint8_t ret = USBD_OK;
@@ -344,15 +347,15 @@ static uint8_t  USBD_CDC_Setup(USBD_HandleTypeDef *pdev,
 }
 
 /**
-  * @brief  USBD_CDC_DataIn
+  * @brief  USBD_CLA_DataIn
   *         Data sent on non-control IN endpoint
   * @param  pdev: device instance
   * @param  epnum: endpoint number
   * @retval status
   */
-static uint8_t  USBD_CDC_DataIn(USBD_HandleTypeDef *pdev, uint8_t epnum)
+static uint8_t  USBD_CLA_DataIn(USBD_HandleTypeDef *pdev, uint8_t epnum)
 {
-  USBD_CDC_HandleTypeDef *hcdc = (USBD_CDC_HandleTypeDef *)pdev->pClassData;
+  USBD_CLA_HandleTypeDef *hcla = (USBD_CLA_HandleTypeDef *)pdev->pClassData;
   // PCD_HandleTypeDef *hpcd = pdev->pData;
 
   if (pdev->pClassData != NULL)
@@ -367,7 +370,7 @@ static uint8_t  USBD_CDC_DataIn(USBD_HandleTypeDef *pdev, uint8_t epnum)
     }
     else */
     {
-      hcdc->TxState = 0U;
+      hcla->TxState = 0U;
     }
     return USBD_OK;
   }
@@ -378,27 +381,27 @@ static uint8_t  USBD_CDC_DataIn(USBD_HandleTypeDef *pdev, uint8_t epnum)
 }
 
 /**
-  * @brief  USBD_CDC_DataOut
+  * @brief  USBD_CLA_DataOut
   *         Data received on non-control Out endpoint
   * @param  pdev: device instance
   * @param  epnum: endpoint number
   * @retval status
   */
-static uint8_t  USBD_CDC_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum)
+static uint8_t  USBD_CLA_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum)
 {
-  USBD_CDC_HandleTypeDef   *hcdc = (USBD_CDC_HandleTypeDef *) pdev->pClassData;
+  USBD_CLA_HandleTypeDef   *hcla = (USBD_CLA_HandleTypeDef *) pdev->pClassData;
 
   /* Get the received data length */
-  hcdc->RxLength = USBD_LL_GetRxDataSize(pdev, epnum);
+  hcla->RxLength = USBD_LL_GetRxDataSize(pdev, epnum);
 
   // ici on peut inserer le traitement du message, lui passer
-  // lui passer hcdc->RxBuffer et hcdc->RxLength
+  // lui passer hcla->RxBuffer et hcla->RxLength
   // pendant ce temps la, le flux est controle (NAKed)
   // ou alors simplement alerter l'appli
-  hcdc->RxCnt += 1;
+  hcla->RxCnt += 1;
 
   // et puis il faut preparer la reception du prochain
-  USBD_LL_PrepareReceive( pdev, CDC_OUT_EP, hcdc->RxBuffer, CDC_DATA_PACKET_SIZE);
+  USBD_LL_PrepareReceive( pdev, CLA_OUT_EP, hcla->RxBuffer, CLA_DATA_PACKET_SIZE);
 
   return USBD_OK;
 
@@ -406,27 +409,27 @@ static uint8_t  USBD_CDC_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum)
 
 
 /**
-  * @brief  USBD_CDC_GetFSCfgDesc
+  * @brief  USBD_CLA_GetFSCfgDesc
   *         Return configuration descriptor
   * @param  length : pointer data length
   * @retval pointer to descriptor buffer
   */
-static uint8_t  *USBD_CDC_GetFSCfgDesc(uint16_t *length)
+static uint8_t  *USBD_CLA_GetFSCfgDesc(uint16_t *length)
 {
-  *length = sizeof(USBD_CDC_CfgFSDesc);
-  return USBD_CDC_CfgFSDesc;
+  *length = sizeof(USBD_CLA_CfgFSDesc);
+  return USBD_CLA_CfgFSDesc;
 }
 
 /**
-  * @brief  USBD_CDC_GetHSCfgDesc
+  * @brief  USBD_CLA_GetHSCfgDesc
   *         Return configuration descriptor
   * @param  length : pointer data length
   * @retval pointer to descriptor buffer
   */
-static uint8_t  *USBD_CDC_GetHSCfgDesc(uint16_t *length)
+static uint8_t  *USBD_CLA_GetHSCfgDesc(uint16_t *length)
 {
-  *length = sizeof(USBD_CDC_CfgFSDesc);
-  return USBD_CDC_CfgFSDesc;
+  *length = sizeof(USBD_CLA_CfgFSDesc);
+  return USBD_CLA_CfgFSDesc;
 }
 
 /**
@@ -435,69 +438,69 @@ static uint8_t  *USBD_CDC_GetHSCfgDesc(uint16_t *length)
 * @param  length : pointer data length
 * @retval pointer to descriptor buffer
 */
-uint8_t  *USBD_CDC_GetDeviceQualifierDescriptor(uint16_t *length)
+uint8_t  *USBD_CLA_GetDeviceQualifierDescriptor(uint16_t *length)
 {
-  *length = sizeof(USBD_CDC_DeviceQualifierDesc);
-  return USBD_CDC_DeviceQualifierDesc;
+  *length = sizeof(USBD_CLA_DeviceQualifierDesc);
+  return USBD_CLA_DeviceQualifierDesc;
 }
 
 /**
-  * @brief  USBD_CDC_SetRxBuffer
+  * @brief  USBD_CLA_SetRxBuffer
   * @param  pdev: device instance
   * @param  pbuff: Rx Buffer
   * @retval status
   */
-uint8_t  USBD_CDC_SetRxBuffer(USBD_HandleTypeDef   *pdev,
+uint8_t  USBD_CLA_SetRxBuffer(USBD_HandleTypeDef   *pdev,
                               uint8_t  *pbuff)
 {
-  USBD_CDC_HandleTypeDef   *hcdc = (USBD_CDC_HandleTypeDef *) pdev->pClassData;
+  USBD_CLA_HandleTypeDef   *hcla = (USBD_CLA_HandleTypeDef *) pdev->pClassData;
 
-  hcdc->RxBuffer = pbuff;
+  hcla->RxBuffer = pbuff;
 
   return USBD_OK;
 }
 
 
 /**
-  * @brief  USBD_CDC_SetTxBuffer
+  * @brief  USBD_CLA_SetTxBuffer
   * @param  pdev: device instance
   * @param  pbuff: Tx Buffer
   * @retval status
   *
-uint8_t  USBD_CDC_SetTxBuffer(USBD_HandleTypeDef   *pdev,
+uint8_t  USBD_CLA_SetTxBuffer(USBD_HandleTypeDef   *pdev,
                               uint8_t  *pbuff,
                               uint16_t length)
 {
-  USBD_CDC_HandleTypeDef   *hcdc = (USBD_CDC_HandleTypeDef *) pdev->pClassData;
+  USBD_CLA_HandleTypeDef   *hcla = (USBD_CLA_HandleTypeDef *) pdev->pClassData;
 
-  hcdc->TxBuffer = pbuff;
-  hcdc->TxLength = length;
+  hcla->TxBuffer = pbuff;
+  hcla->TxLength = length;
 
   return USBD_OK;
 } */
 
 
 
-// USBD_CDC_SendPacket() is the merge of USBD_CDC_SetTxBuffer() and USBD_CDC_TransmitPacket()
+// USBD_CLA_SendPacket() is the merge of USBD_CLA_SetTxBuffer() and USBD_CLA_TransmitPacket()
 //
-uint8_t  USBD_CDC_SendPacket( USBD_HandleTypeDef *pdev, uint8_t *pbuff, uint16_t length )
+uint8_t  USBD_CLA_SendPacket( USBD_HandleTypeDef *pdev, uint8_t *pbuff, uint16_t length )
 {
-  USBD_CDC_HandleTypeDef   *hcdc = (USBD_CDC_HandleTypeDef *) pdev->pClassData;
+  USBD_CLA_HandleTypeDef   *hcla = (USBD_CLA_HandleTypeDef *) pdev->pClassData;
 
-  hcdc->TxBuffer = pbuff;
-  hcdc->TxLength = length;
+  hcla->TxBuffer = pbuff;
+  hcla->TxLength = length;
 
   if (pdev->pClassData != NULL)
   {
-    if (hcdc->TxState == 0U)
+    if (hcla->TxState == 0U)
     {
       /* Tx Transfer in progress */
-      hcdc->TxState = 1U;
+      hcla->TxState = 1U;
       /* Update the packet total length */
-      pdev->ep_in[CDC_IN_EP & 0xFU].total_length = hcdc->TxLength;
+      pdev->ep_in[CLA_IN_EP & 0xFU].total_length = hcla->TxLength;
       /* Transmit next packet */
-      USBD_LL_Transmit(pdev, CDC_IN_EP, hcdc->TxBuffer,
-                       (uint16_t)hcdc->TxLength);
+      USBD_LL_Transmit(pdev, CLA_IN_EP, hcla->TxBuffer,
+                       (uint16_t)hcla->TxLength);
       return USBD_OK;
     }
     else
@@ -513,20 +516,20 @@ uint8_t  USBD_CDC_SendPacket( USBD_HandleTypeDef *pdev, uint8_t *pbuff, uint16_t
 
 
 /**
-  * @brief  USBD_CDC_ReceivePacket
+  * @brief  USBD_CLA_ReceivePacket
   *         prepare OUT Endpoint for reception
   * @param  pdev: device instance
   * @retval status
   */
-uint8_t  USBD_CDC_ReceivePacket(USBD_HandleTypeDef *pdev)
+uint8_t  USBD_CLA_ReceivePacket(USBD_HandleTypeDef *pdev)
 {
-  USBD_CDC_HandleTypeDef   *hcdc = (USBD_CDC_HandleTypeDef *) pdev->pClassData;
+  USBD_CLA_HandleTypeDef   *hcla = (USBD_CLA_HandleTypeDef *) pdev->pClassData;
 
   /* Suspend or Resume USB Out process */
   if (pdev->pClassData != NULL)
   {
       /* Prepare Out endpoint to receive next packet */
-    USBD_LL_PrepareReceive(pdev, CDC_OUT_EP, hcdc->RxBuffer, CDC_DATA_PACKET_SIZE);
+    USBD_LL_PrepareReceive(pdev, CLA_OUT_EP, hcla->RxBuffer, CLA_DATA_PACKET_SIZE);
     return USBD_OK;
   }
   else

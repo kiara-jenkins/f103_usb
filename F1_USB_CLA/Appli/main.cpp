@@ -193,12 +193,13 @@ switch	( c )
 			USBD_Device.ep_out[1].status,
 			usb_intcnt
 			);
+		CDC_printf("sizeof(USBD_CLA_HandleTypeDef)=%u, pClassData=%08x\n", sizeof(USBD_CLA_HandleTypeDef), USBD_Device.pClassData );
 		break;
 	case 'P' :
 		USB_dump_PMA();
 		break;
 	case '/' :
-		while ( USBD_CDC_SendPacket( &USBD_Device, midiAllOff, 4 ) == 1 ) { CDC_printf("/"); }
+		while ( USBD_CLA_SendPacket( &USBD_Device, midiAllOff, 4 ) == 1 ) { CDC_printf("/"); }
 		break;
 	#endif
 
@@ -324,7 +325,7 @@ gpio_sw_i2c_init();
 #ifdef MIDI_USB
 if	(USBD_Init( &USBD_Device, &FS_Desc, 0 ) != USBD_OK)
 	 while(1) {};
-if	(USBD_RegisterClass( &USBD_Device, &USBD_CDC ) != USBD_OK)
+if	(USBD_RegisterClass( &USBD_Device, &USBD_CLA ) != USBD_OK)
 	while(1) {};
 if	(USBD_Start( &USBD_Device ) != USBD_OK)
 	while(1) {};
@@ -349,13 +350,13 @@ while (1)
 	#ifdef MIDI_USB
 	if	( USBD_Device.dev_state == 3 )
 		{
-		USBD_CDC_HandleTypeDef *hcla = (USBD_CDC_HandleTypeDef *)USBD_Device.pClassData;
+		USBD_CLA_HandleTypeDef *hcla = (USBD_CLA_HandleTypeDef *)USBD_Device.pClassData;
 		if	( hcla->RxCnt )
 			{
 			hcla->RxCnt = 0;
 			if	( cntblinks == 2 )	// echo !
 				{
-				while ( USBD_CDC_SendPacket( &USBD_Device, hcla->RxBuffer, 4 ) == 1 ) { CDC_printf("."); }
+				while ( USBD_CLA_SendPacket( &USBD_Device, hcla->RxBuffer, 4 ) == 1 ) { CDC_printf("."); }
 				}
 			CDC_printf("MIDI RX len=%u : %02x %02x %02x\n", hcla->RxLength,  hcla->RxBuffer[1], hcla->RxBuffer[2], hcla->RxBuffer[3] );
 			}
@@ -398,17 +399,17 @@ while (1)
 			if	( cntblinks == 4 )
 				{
 				// note off etait prepare lors du note on precedent ;-)
-				while ( USBD_CDC_SendPacket( &USBD_Device, midiNoteOffOn, 8 ) == 1 ) { CDC_printf(":"); }
+				while ( USBD_CLA_SendPacket( &USBD_Device, midiNoteOffOn, 8 ) == 1 ) { CDC_printf(":"); }
 				midiNoteOffOn[2] = midiNoteOffOn[6];				// pret pour le prochain tour
 				CDC_printf("sent 8 bytes !\n");
 				}
 			else	{
 				unsigned int finedelay = ( 2 * 72000 ) / 3;	// 72000 = 1ms (ne pas depasser 4ms)
 				// note off etait prepare lors du note on precedent ;-)
-				while ( USBD_CDC_SendPacket( &USBD_Device, midiNoteOff, 4 ) == 1 ) { CDC_printf(","); }
+				while ( USBD_CLA_SendPacket( &USBD_Device, midiNoteOff, 4 ) == 1 ) { CDC_printf(","); }
 				midiNoteOff[2] = midiNoteOn[2];				// pret pour le prochain tour
 				tickdelay( finedelay );
-				while ( USBD_CDC_SendPacket( &USBD_Device, midiNoteOn, 4 ) == 1 ) { CDC_printf(";"); }
+				while ( USBD_CLA_SendPacket( &USBD_Device, midiNoteOn, 4 ) == 1 ) { CDC_printf(";"); }
 				}
 			}
 	#endif

@@ -185,8 +185,8 @@ USBD_StatusTypeDef USBD_LL_Init(USBD_HandleTypeDef * pdev)
 
   HAL_PCDEx_PMAConfig(pdev->pData, 0x00, PCD_SNG_BUF, 0x40);
   HAL_PCDEx_PMAConfig(pdev->pData, 0x80, PCD_SNG_BUF, 0x80);
-  HAL_PCDEx_PMAConfig(pdev->pData, CDC_IN_EP, PCD_SNG_BUF, 0xC0);
-  HAL_PCDEx_PMAConfig(pdev->pData, CDC_OUT_EP, PCD_SNG_BUF, 0x100);
+  HAL_PCDEx_PMAConfig(pdev->pData, CLA_IN_EP, PCD_SNG_BUF, 0xC0);
+  HAL_PCDEx_PMAConfig(pdev->pData, CLA_OUT_EP, PCD_SNG_BUF, 0x100);
 
 
   return USBD_OK;
@@ -381,22 +381,22 @@ void USBD_LL_Delay(uint32_t Delay)
   * @brief  static single allocation.
   * @param  size: size of allocated memory
   * @retval None
-  */
+  *
 void *USBD_static_malloc(uint32_t size)
 {
   static uint32_t mem[MAX_STATIC_ALLOC_SIZE];
   return mem;
-}
+}*/
 
 /**
   * @brief  Dummy memory free
   * @param  *p pointer to allocated  memory address
   * @retval None
-  */
+  *
 void USBD_static_free(void *p)
 {
 
-}
+}*/
 
 /**
   * @brief  Software Device Connection
