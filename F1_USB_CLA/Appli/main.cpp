@@ -143,6 +143,8 @@ switch	( c )
 		break;
 	case '&' :
 		CDC_printf( "HCLK %u, DWT %u\n", SystemCoreClock, DWT->CYCCNT );
+		CoreDebug->DEMCR &= ~CoreDebug_DEMCR_TRCENA_Msk;	// p. C1-24
+		CoreDebug->DEMCR |=  CoreDebug_DEMCR_TRCENA_Msk;
 		DWT->CTRL &= ~DWT_CTRL_CYCCNTENA_Msk;
 		DWT->CYCCNT = 0;
 		break;
@@ -358,7 +360,8 @@ while (1)
 				{
 				while ( USBD_CLA_SendPacket( &USBD_Device, hcla->RxBuffer, 4 ) == 1 ) { CDC_printf("."); }
 				}
-			CDC_printf("MIDI RX len=%u : %02x %02x %02x\n", hcla->RxLength,  hcla->RxBuffer[1], hcla->RxBuffer[2], hcla->RxBuffer[3] );
+			CDC_printf("MIDI RX len=%u : %02x %02x %02x %s\n", hcla->RxLength,
+				   hcla->RxBuffer[1], hcla->RxBuffer[2], hcla->RxBuffer[3], ((cntblinks==2)?("echoed"):("")) );
 			}
 		}
 	#endif
