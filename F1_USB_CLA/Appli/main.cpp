@@ -130,27 +130,18 @@ void cmd_handler( int c )
 switch	( c )
 	{
 	case '#' :
-		CoreDebug->DEMCR &= ~CoreDebug_DEMCR_TRCENA_Msk;	// p. C1-24
-		CoreDebug->DEMCR |=  CoreDebug_DEMCR_TRCENA_Msk;
-		DWT->CTRL &= ~DWT_CTRL_CYCCNTENA_Msk;
-		DWT->CTRL |=  DWT_CTRL_CYCCNTENA_Msk;
-		DWT->CYCCNT = 0;
-		__ASM volatile ("NOP");
-		__ASM volatile ("NOP");
-		__ASM volatile ("NOP");
-		tickdelay( 5000 );
-		CDC_printf( "DWT running ? %u\n", DWT->CYCCNT );
+		DWT_start();
+		CDC_printf( "DWT running ? %u\n", DWT_is_running() );
 		break;
 	case '&' :
 		CDC_printf( "HCLK %u, DWT %u\n", SystemCoreClock, DWT->CYCCNT );
-		CoreDebug->DEMCR &= ~CoreDebug_DEMCR_TRCENA_Msk;	// p. C1-24
-		CoreDebug->DEMCR |=  CoreDebug_DEMCR_TRCENA_Msk;
-		DWT->CTRL &= ~DWT_CTRL_CYCCNTENA_Msk;
-		DWT->CYCCNT = 0;
+		DWT_stop();
 		break;
 	case '$' :
 		report_interrupts();
+		CDC_printf( "DWT running ? %u\n", DWT_is_running() );
 		break;
+
 	#ifdef ENCODER_TIM
 	case 'e' :
 		CDC_printf( "b=%d, xy=%d:%d, e=%u\n", LL_GPIO_IsInputPinSet(GPIOC, LL_GPIO_PIN_13 ),
@@ -341,7 +332,7 @@ cmd_handler( 's' );
 #endif
 
 // // LA GROSSE BOUCLE MAIN LOOP
-int c;
+int c; unsigned int tTX=0, tRX, dtus;
 while (1)
   	{
  	static unsigned int old1Hz = 0;
@@ -355,13 +346,14 @@ while (1)
 		USBD_CLA_HandleTypeDef *hcla = (USBD_CLA_HandleTypeDef *)USBD_Device.pClassData;
 		if	( hcla->RxCnt )
 			{
+			tRX = DWT->CYCCNT; dtus = ( tRX - tTX ) / ( SystemCoreClock / 1000000 );
 			hcla->RxCnt = 0;
 			if	( cntblinks == 2 )	// echo !
 				{
 				while ( USBD_CLA_SendPacket( &USBD_Device, hcla->RxBuffer, 4 ) == 1 ) { CDC_printf("."); }
 				}
-			CDC_printf("MIDI RX len=%u : %02x %02x %02x %s\n", hcla->RxLength,
-				   hcla->RxBuffer[1], hcla->RxBuffer[2], hcla->RxBuffer[3], ((cntblinks==2)?("echoed"):("")) );
+			CDC_printf("MIDI RX len=%u : %02x %02x %02x %s <%u us>\n", hcla->RxLength,
+				   hcla->RxBuffer[1], hcla->RxBuffer[2], hcla->RxBuffer[3], ((cntblinks==2)?("echoed"):("")), dtus );
 			}
 		}
 	#endif
@@ -384,16 +376,12 @@ while (1)
  	if	(  ( old1Hz != cnt1Hz ) )
  		{
  		old1Hz = cnt1Hz;
- 		if	( DWT->CYCCNT )
-	 		CDC_printf( "%u s DWT test %u\n", cnt1Hz, DWT->CYCCNT / SystemCoreClock );
+ 		// if	( DWT->CYCCNT )	CDC_printf( "%u s DWT test %u\n", cnt1Hz, DWT->CYCCNT / SystemCoreClock );
 
 	#ifdef ENCODER_TIM
 		short int e = encoder_get(TIM1);
 		//CDC_printf( "b=%d, xy=%d:%d, e=%u\n", LL_GPIO_IsInputPinSet(GPIOC, LL_GPIO_PIN_13 ),
 		//	LL_GPIO_IsInputPinSet(GPIOA, LL_GPIO_PIN_8 ), LL_GPIO_IsInputPinSet(GPIOA, LL_GPIO_PIN_9 ), e );
-		// bornage pour MIDI
-		e /= 4;	// cheap encoder in mode X4
-		midiNoteOn[2] = midiNoteOffOn[6] = 65 + ( (e+100000000) % 13 );		// encoder -> gamme chromatique sur 1 octave a partir de Fa
 	#endif
 
 	#ifdef MIDI_USB
@@ -407,16 +395,21 @@ while (1)
 				CDC_printf("sent 8 bytes !\n");
 				}
 			else	{
-				unsigned int finedelay = ( 2 * 72000 ) / 3;	// 72000 = 1ms (ne pas depasser 4ms)
-				// note off etait prepare lors du note on precedent ;-)
-				while ( USBD_CLA_SendPacket( &USBD_Device, midiNoteOff, 4 ) == 1 ) { CDC_printf(","); }
-				midiNoteOff[2] = midiNoteOn[2];				// pret pour le prochain tour
-				tickdelay( finedelay );
-				while ( USBD_CLA_SendPacket( &USBD_Device, midiNoteOn, 4 ) == 1 ) { CDC_printf(";"); }
+				if	( cnt1Hz & 1 )
+					{
+					// note off etait prepare lors du tour precedent ;-)
+					while ( USBD_CLA_SendPacket( &USBD_Device, midiNoteOff, 4 ) == 1 ) { CDC_printf(","); }
+					tTX = DWT->CYCCNT;
+					}
+				else	{
+					midiNoteOff[2] = midiNoteOn[2] = 65  + ( (cnt1Hz>>1) % 13 );		// pret pour le prochain tour
+					while ( USBD_CLA_SendPacket( &USBD_Device, midiNoteOn, 4 ) == 1 ) { CDC_printf(";"); }
+					tTX = DWT->CYCCNT;
+					}
 				}
 			}
 	#endif
-		}
-	}
+		} // 1 fois par seconde
+	} // while
 }
 

@@ -8,13 +8,15 @@ Appli derivee de pm_test/test.c, hyper-simplifiee :
 	- affichage delta-t entre events (en ms)
 */
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <time.h>
+#include <ctype.h>
+
 #include "portmidi.h"
 #include "porttime.h"
-#include "stdlib.h"
-#include "stdio.h"
-#include "string.h"
-#include "unistd.h"
-#include "time.h"
 
 #define INPUT_BUFFER_SIZE 128
 #define OUTPUT_BUFFER_SIZE 128
@@ -204,7 +206,7 @@ int main( int argc, char *argv[] )
 {
 list();
 
-int i, idev = -1, odev = -1;
+int i, idev = -1, odev = -1, echoflag = 0;
 const char * iname, * oname;
 const PmDeviceInfo *info;
 i = 1;
@@ -212,15 +214,23 @@ if	( argc == 1 )
 	usage();
 while	( i < argc )
 	{
-	int dev = atoi( argv[i++] );
-	if	( ( dev >= 0 ) && ( dev < Pm_CountDevices() ) )
+	if	( isdigit(argv[i][0]) )
 		{
-		info = Pm_GetDeviceInfo( dev );
-		if	( info->input )
-			{ idev = dev; iname = info->name; }
-		else if	( info->output )
-			{ odev = dev; oname = info->name; }
+		int dev = atoi(argv[i]);
+		if	( ( dev >= 0 ) && ( dev < Pm_CountDevices() ) )
+			{
+			info = Pm_GetDeviceInfo( dev );
+			if	( info->input )
+				{ idev = dev; iname = info->name; }
+			else if	( info->output )
+				{ odev = dev; oname = info->name; }
+			}
 		}
+	else	{
+		if	( argv[i][0] == 'E' )
+			echoflag = 1;
+		}
+	i++;
 	}
 if	( odev >= 0 )
 	printf(" opening MIDI output %d : %s\n", odev, oname );
@@ -245,7 +255,7 @@ else if	( ( idev <  0 ) && ( odev >= 0 ) )
 	main_test_output( odev, idev );
 else if	( ( idev >= 0 ) && ( odev >= 0 ) )
 	{
-	if	( ( argc >= 4 ) && ( argv[3][0] == 'E' ) )
+	if	( echoflag )
 		main_test_echo( idev, odev );
 	else	main_test_output( odev, idev );
 	}
